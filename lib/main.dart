@@ -1,8 +1,25 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'page/main_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // TODO 鸿蒙不支持窗口管理
+  try {
+    await windowManager.ensureInitialized();
+    WindowOptions windowOptions = WindowOptions(
+      titleBarStyle: TitleBarStyle.hidden,
+      windowButtonVisibility: true,
+    );
+    windowManager.setMovable(false);
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  } catch (e) {
+    print(e);
+  }
   runApp(const MainApp());
 }
 

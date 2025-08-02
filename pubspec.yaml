@@ -12,6 +12,7 @@ dependencies:
   shadcn_flutter:
     git:
       url: https://github.com/qinshah/shadcn_flutter_ohos.git
+  window_manager: ^0.5.1
 
 dev_dependencies:
   flutter_test:

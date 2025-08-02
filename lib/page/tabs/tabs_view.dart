@@ -16,9 +16,11 @@ class _TabsViewState extends State<TabsView> {
   late int _maxIndex = _tabs.length;
 
   void _add() {
+    _maxIndex++;
     setState(() {
-      _maxIndex++;
-      _index++;
+      if (_tabs.isNotEmpty) {
+        _index++;
+      }
       _tabs.insert(
         _index,
         TabPaneData(MyTab('页面$_maxIndex', '页面$_maxIndex内容')),
@@ -70,7 +72,6 @@ class _TabsViewState extends State<TabsView> {
     return Scaffold(
       backgroundColor: theme.colorScheme.accent,
       child: TabPane<MyTab>(
-        
         items: _tabs,
         itemBuilder: (context, item, index) {
           return _buildTabItem(index);

@@ -1,4 +1,5 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'tabs/tabs_view.dart';
 
@@ -11,29 +12,37 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   bool _expanded = false;
-  int _selected = 0;
+  int? _index = 0;
   bool _showLeft = true;
   bool _showRight = true;
   bool _showBottom = true;
+  DateTime _lastTapTime = DateTime(0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       child: Column(
         children: [
-          _appBar(),
+          _windowBar(),
           Expanded(
             child: Row(
               children: [
                 NavigationRail(
+                  padding: EdgeInsets.all(4),
                   labelType: NavigationLabelType.expanded,
                   labelPosition: NavigationLabelPosition.bottom,
                   alignment: NavigationRailAlignment.start,
                   expanded: _expanded,
-                  index: _selected,
+                  index: _index,
                   onSelected: (value) {
                     setState(() {
-                      _selected = value;
+                      if (value == _index) {
+                        _index = null;
+                        _showLeft = !_showLeft;
+                      } else {
+                        _index = value;
+                        _showLeft = true;
+                      }
                     });
                   },
                   children: [
@@ -47,15 +56,15 @@ class _MainPageState extends State<MainPage> {
                       },
                       child: const Icon(Icons.menu),
                     ),
-                    NavigationDivider(color: Colors.slate[200]),
-                    _buildButton('目录', Icons.file_copy_outlined),
-                    _buildButton('搜索', Icons.search_outlined),
-                    _buildButton('代码管理', LucideIcons.gitFork),
-                    _buildButton('运行调试', LucideIcons.bugPlay),
-                    _buildButton('远程资源', RadixIcons.cardStackMinus),
-                    NavigationDivider(color: Colors.slate[200]),
-                    _buildButton('插件', RadixIcons.dashboard),
-                    _buildButton('测试', LucideIcons.testTubeDiagonal),
+                    NavigationDivider(color: Colors.slate[300]),
+                    _buildButton(_NavItem.values[0]),
+                    _buildButton(_NavItem.values[1]),
+                    _buildButton(_NavItem.values[2]),
+                    _buildButton(_NavItem.values[3]),
+                    _buildButton(_NavItem.values[4]),
+                    NavigationDivider(color: Colors.slate[300]),
+                    _buildButton(_NavItem.values[5]),
+                    _buildButton(_NavItem.values[6]),
                   ],
                 ),
                 Expanded(
@@ -74,10 +83,13 @@ class _MainPageState extends State<MainPage> {
                           initialSize: 200,
                           child: Card(
                             padding: EdgeInsets.zero,
-                            child: Center(child: Text('左侧面板')),
+                            child: Center(
+                              child: Text(_NavItem.values[_index ?? 0].title),
+                            ),
                           ),
                         ),
                       ResizablePane.flex(
+                        minSize: 100,
                         key: Key('MainPane'), // 不加key会导致关闭左侧面板后右侧面板占主要尺寸
                         child: ResizablePanel.vertical(
                           draggerBuilder: (context) {
@@ -97,10 +109,34 @@ class _MainPageState extends State<MainPage> {
                             if (_showBottom)
                               ResizablePane(
                                 minSize: 50,
-                                initialSize: 200,
+                                initialSize: 150,
                                 child: Card(
-                                  padding: EdgeInsets.zero,
-                                  child: Center(child: Text('底部面板')),
+                                  padding: EdgeInsets.all(4),
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Text('底部面板'),
+                                      Positioned(
+                                        top: 0,
+                                        right: 0,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            IconButton.ghost(
+                                              size: ButtonSize.small,
+                                              icon: Icon(Icons.close),
+                                              onPressed: () {
+                                                setState(() {
+                                                  _showBottom = false;
+                                                });
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                           ],
@@ -111,8 +147,31 @@ class _MainPageState extends State<MainPage> {
                           minSize: 100,
                           initialSize: 200,
                           child: Card(
-                            padding: EdgeInsets.zero,
-                            child: Center(child: Text('右侧面板')),
+                            padding: EdgeInsets.all(4),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Text('右侧面板'),
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      IconButton.ghost(
+                                        size: ButtonSize.small,
+                                        icon: Icon(Icons.close),
+                                        onPressed: () {
+                                          setState(() {
+                                            _showRight = false;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                     ],
@@ -132,59 +191,102 @@ class _MainPageState extends State<MainPage> {
         : const SizedBox(width: 2);
   }
 
-  Widget _appBar() {
-    return Padding(
-      padding: EdgeInsets.all(8),
-      child: Row(
-        children: [
-          Text('Studio'),
-          Spacer(),
-          IconButton.ghost(
-            size: ButtonSize.small,
-            icon: Icon(
-              _showLeft ? LucideIcons.panelLeftClose : LucideIcons.panelLeft,
+  Widget _windowBar() {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onPanStart: (details) {
+        windowManager.startDragging();
+      },
+      onTap: () async {
+        var now = DateTime.now();
+        // 计时器判断双击，解决单击响应慢的问题
+        if (now.difference(_lastTapTime).inMilliseconds < 300) {
+          // TODO 鸿蒙不支持窗口管理
+          try {
+            bool isMaximized = await windowManager.isMaximized();
+            if (!isMaximized) {
+              windowManager.maximize();
+            } else {
+              windowManager.unmaximize();
+            }
+          } catch (e) {
+            print(e);
+          }
+        } else {
+          _lastTapTime = now;
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        child: Row(
+          children: [
+            SizedBox(width: 80),
+            Text('Studio'),
+            Spacer(),
+            IconButton.ghost(
+              size: ButtonSize.small,
+              icon: Icon(
+                _showLeft ? LucideIcons.panelLeftClose : LucideIcons.panelLeft,
+              ),
+              onPressed: () {
+                setState(() {
+                  _showLeft = !_showLeft;
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _showLeft = !_showLeft;
-              });
-            },
-          ),
-          IconButton.ghost(
-            size: ButtonSize.small,
-            icon: Icon(
-              _showBottom
-                  ? LucideIcons.panelBottomClose
-                  : LucideIcons.panelBottom,
+            IconButton.ghost(
+              size: ButtonSize.small,
+              icon: Icon(
+                _showBottom
+                    ? LucideIcons.panelBottomClose
+                    : LucideIcons.panelBottom,
+              ),
+              onPressed: () {
+                setState(() {
+                  _showBottom = !_showBottom;
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _showBottom = !_showBottom;
-              });
-            },
-          ),
-          IconButton.ghost(
-            size: ButtonSize.small,
-            icon: Icon(
-              _showRight ? LucideIcons.panelRightClose : LucideIcons.panelRight,
+            IconButton.ghost(
+              size: ButtonSize.small,
+              icon: Icon(
+                _showRight
+                    ? LucideIcons.panelRightClose
+                    : LucideIcons.panelRight,
+              ),
+              onPressed: () {
+                setState(() {
+                  _showRight = !_showRight;
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _showRight = !_showRight;
-              });
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  NavigationItem _buildButton(String text, IconData icon) {
+  NavigationItem _buildButton(_NavItem nav) {
     return NavigationItem(
-      label: Text(text),
+      label: Text(nav.title),
       alignment: Alignment.center,
       selectedStyle: const ButtonStyle.primaryIcon(),
-      child: Icon(icon),
+      child: nav.icon,
     );
   }
+}
+
+enum _NavItem {
+  contents('目录', Icon(Icons.file_copy_outlined)),
+  search('搜索', Icon(Icons.search_outlined)),
+  code('代码管理', Icon(LucideIcons.gitFork)),
+  debug('运行调试', Icon(LucideIcons.bugPlay)),
+  remote('远程资源', Icon(RadixIcons.cardStackMinus)),
+  plugin('插件', Icon(RadixIcons.dashboard)),
+  test('测试', Icon(LucideIcons.testTubeDiagonal)),
+  ;
+
+  final String title;
+  final Widget icon;
+  const _NavItem(this.title, this.icon);
 }
