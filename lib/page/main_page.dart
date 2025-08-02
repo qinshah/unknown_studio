@@ -1,5 +1,7 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
+import 'tabs/tabs_view.dart';
+
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -14,91 +16,108 @@ class _MainPageState extends State<MainPage> {
   bool _showRight = true;
   bool _showBottom = true;
 
-  NavigationItem buildButton(String text, IconData icon) {
-    return NavigationItem(
-      label: Text(text),
-      alignment: Alignment.center,
-      selectedStyle: const ButtonStyle.primaryIcon(),
-      child: Icon(icon),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Column(
         children: [
-          NavigationRail(
-            backgroundColor: Colors.slate[100],
-            labelType: NavigationLabelType.expanded,
-            labelPosition: NavigationLabelPosition.bottom,
-            alignment: NavigationRailAlignment.start,
-            expanded: _expanded,
-            index: _selected,
-            onSelected: (value) {
-              setState(() {
-                _selected = value;
-              });
-            },
-            children: [
-              NavigationButton(
-                alignment: Alignment.center,
-                label: const Text('收起'),
-                onPressed: () {
-                  setState(() {
-                    _expanded = !_expanded;
-                  });
-                },
-                child: const Icon(Icons.menu),
-              ),
-              NavigationDivider(color: Colors.slate[200]),
-              buildButton('目录', Icons.file_copy_outlined),
-              buildButton('搜索', Icons.search_outlined),
-              buildButton('代码管理', LucideIcons.gitFork),
-              buildButton('运行调试', LucideIcons.bugPlay),
-              buildButton('远程资源', RadixIcons.cardStackMinus),
-              NavigationDivider(color: Colors.slate[200]),
-              buildButton('插件', RadixIcons.dashboard),
-              buildButton('测试', LucideIcons.testTubeDiagonal),
-            ],
-          ),
+          _appBar(),
           Expanded(
-            child: ResizablePanel.horizontal(
-              draggerBuilder: (context) {
-                return const HorizontalResizableDragger();
-              },
+            child: Row(
               children: [
-                if (_showLeft)
-                  ResizablePane(
-                    initialSize: 200,
-                    child: Center(child: Text('左侧面板')),
-                  ),
-                ResizablePane.flex(
-                  child: ResizablePanel.vertical(
+                NavigationRail(
+                  labelType: NavigationLabelType.expanded,
+                  labelPosition: NavigationLabelPosition.bottom,
+                  alignment: NavigationRailAlignment.start,
+                  expanded: _expanded,
+                  index: _selected,
+                  onSelected: (value) {
+                    setState(() {
+                      _selected = value;
+                    });
+                  },
+                  children: [
+                    NavigationButton(
+                      alignment: Alignment.center,
+                      label: const Text('收起'),
+                      onPressed: () {
+                        setState(() {
+                          _expanded = !_expanded;
+                        });
+                      },
+                      child: const Icon(Icons.menu),
+                    ),
+                    NavigationDivider(color: Colors.slate[200]),
+                    _buildButton('目录', Icons.file_copy_outlined),
+                    _buildButton('搜索', Icons.search_outlined),
+                    _buildButton('代码管理', LucideIcons.gitFork),
+                    _buildButton('运行调试', LucideIcons.bugPlay),
+                    _buildButton('远程资源', RadixIcons.cardStackMinus),
+                    NavigationDivider(color: Colors.slate[200]),
+                    _buildButton('插件', RadixIcons.dashboard),
+                    _buildButton('测试', LucideIcons.testTubeDiagonal),
+                  ],
+                ),
+                Expanded(
+                  child: ResizablePanel.horizontal(
                     draggerBuilder: (context) {
                       return const HorizontalResizableDragger();
                     },
+                    dividerBuilder: (context) => _divider(
+                      context,
+                      Axis.vertical,
+                    ),
                     children: [
+                      if (_showLeft)
+                        ResizablePane(
+                          minSize: 100,
+                          initialSize: 200,
+                          child: Card(
+                            padding: EdgeInsets.zero,
+                            child: Center(child: Text('左侧面板')),
+                          ),
+                        ),
                       ResizablePane.flex(
-                        child: ColoredBox(
-                          color: Colors.slate[100],
-                          child: TabPaneExample1(),
+                        key: Key('MainPane'), // 不加key会导致关闭左侧面板后右侧面板占主要尺寸
+                        child: ResizablePanel.vertical(
+                          draggerBuilder: (context) {
+                            return const HorizontalResizableDragger();
+                          },
+                          dividerBuilder: (context) => _divider(
+                            context,
+                            Axis.horizontal,
+                          ),
+                          children: [
+                            ResizablePane.flex(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: TabsView(),
+                              ),
+                            ),
+                            if (_showBottom)
+                              ResizablePane(
+                                minSize: 50,
+                                initialSize: 200,
+                                child: Card(
+                                  padding: EdgeInsets.zero,
+                                  child: Center(child: Text('底部面板')),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (_showBottom)
+                      if (_showRight)
                         ResizablePane(
+                          minSize: 100,
                           initialSize: 200,
-                          child: Center(child: Text('底部面板')),
+                          child: Card(
+                            padding: EdgeInsets.zero,
+                            child: Center(child: Text('右侧面板')),
+                          ),
                         ),
                     ],
                   ),
                 ),
-                if (_showRight)
-                  ResizablePane(
-                    initialSize: 200,
-                    child: Center(child: Text('右侧面板')),
-                  ),
               ],
             ),
           ),
@@ -106,100 +125,66 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
-}
 
-class TabPaneExample1 extends StatefulWidget {
-  const TabPaneExample1({super.key});
-
-  @override
-  State<TabPaneExample1> createState() => _TabPaneExample1State();
-}
-
-class MyTab {
-  final String title;
-  final int count;
-  final String content;
-  MyTab(this.title, this.count, this.content);
-
-  @override
-  String toString() {
-    return 'TabData{title: $title, count: $count, content: $content}';
-  }
-}
-
-class _TabPaneExample1State extends State<TabPaneExample1> {
-  late List<TabPaneData<MyTab>> tabs;
-  int focused = 0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    tabs = [
-      for (int i = 0; i < 3; i++)
-        TabPaneData(MyTab('Tab ${i + 1}', i + 1, 'Content ${i + 1}')),
-    ];
+  Widget? _divider(context, direction) {
+    return direction == Axis.horizontal
+        ? const SizedBox(height: 2)
+        : const SizedBox(width: 2);
   }
 
-  TabItem _buildTabItem(MyTab data) {
-    return TabItem(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 120),
-        child: Label(
-          trailing: IconButton.ghost(
-            shape: ButtonShape.circle,
-            size: ButtonSize.xSmall,
-            icon: const Icon(Icons.close),
+  Widget _appBar() {
+    return Padding(
+      padding: EdgeInsets.all(8),
+      child: Row(
+        children: [
+          Text('Studio'),
+          Spacer(),
+          IconButton.ghost(
+            size: ButtonSize.small,
+            icon: Icon(
+              _showLeft ? LucideIcons.panelLeftClose : LucideIcons.panelLeft,
+            ),
             onPressed: () {
               setState(() {
-                tabs.remove(tabs.firstWhere((element) => element.data == data));
+                _showLeft = !_showLeft;
               });
             },
           ),
-          child: Text(data.title),
-        ),
+          IconButton.ghost(
+            size: ButtonSize.small,
+            icon: Icon(
+              _showBottom
+                  ? LucideIcons.panelBottomClose
+                  : LucideIcons.panelBottom,
+            ),
+            onPressed: () {
+              setState(() {
+                _showBottom = !_showBottom;
+              });
+            },
+          ),
+          IconButton.ghost(
+            size: ButtonSize.small,
+            icon: Icon(
+              _showRight ? LucideIcons.panelRightClose : LucideIcons.panelRight,
+            ),
+            onPressed: () {
+              setState(() {
+                _showRight = !_showRight;
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return TabPane<MyTab>(
-      items: tabs,
-      itemBuilder: (context, item, index) {
-        return _buildTabItem(item.data);
-      },
-      focused: focused,
-      onFocused: (value) {
-        setState(() {
-          focused = value;
-        });
-      },
-      onSort: (value) {
-        setState(() {
-          tabs = value;
-        });
-      },
-      trailing: [
-        IconButton.ghost(
-          icon: const Icon(Icons.add),
-          size: ButtonSize.small,
-          density: ButtonDensity.iconDense,
-          onPressed: () {
-            setState(() {
-              int max = tabs.fold<int>(0, (previousValue, element) {
-                return element.data.count > previousValue
-                    ? element.data.count
-                    : previousValue;
-              });
-              tabs.add(TabPaneData(
-                  MyTab('Tab ${max + 1}', max + 1, 'Content ${max + 1}')));
-            });
-          },
-        )
-      ],
-      child: Center(
-        child: Text('Tab ${focused + 1}').xLarge().bold(),
-      ),
+  NavigationItem _buildButton(String text, IconData icon) {
+    return NavigationItem(
+      label: Text(text),
+      alignment: Alignment.center,
+      selectedStyle: const ButtonStyle.primaryIcon(),
+      child: Icon(icon),
     );
   }
 }

@@ -12,10 +12,13 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShadcnApp(
+      debugShowCheckedModeBanner: false,
       title: 'Studio',
       home: MainPage(),
       theme: ThemeData(
-        colorScheme: ColorSchemes.lightBlue(),
+        colorScheme: ColorSchemes.lightBlue().copyWith(
+          background: Colors.gray[200],
+        ),
         radius: 0.5,
       ),
     );
