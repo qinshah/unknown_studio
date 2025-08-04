@@ -1,10 +1,11 @@
 import 'dart:io';
 
+import 'package:animated_tree_view/animated_tree_view.dart' as t;
+import 'package:flutter/material.dart' as material;
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import '../../model/panel_model.dart';
 
-// TODO 这个树组件bug有点多，换一个
 class ContentPanel extends StatefulWidget {
   const ContentPanel({super.key});
 
@@ -13,7 +14,7 @@ class ContentPanel extends StatefulWidget {
 }
 
 class _ContentPanelState extends State<ContentPanel> {
-  List<TreeNode<FileSystemEntity>> _fileTree = [];
+  t.TreeNode<FileSystemEntity> _tree = t.TreeNode.root(data: Directory('/'));
 
   @override
   void initState() {
@@ -22,39 +23,30 @@ class _ContentPanelState extends State<ContentPanel> {
   }
 
   void _initFileTree() async {
-    final rootDir = Directory('/');
-    final nodes = await _getDirectoryContents(rootDir, 0, 2);
+    final tree = t.TreeNode.root(data: Directory('/'));
+    await _getNodeChildren(node: tree, currentDepth: 0);
     setState(() {
-      _fileTree = nodes;
+      _tree = tree;
     });
   }
 
-  Future<List<TreeNode<FileSystemEntity>>> _getDirectoryContents(
-      Directory directory, int currentDepth, int maxDepth) async {
-    if (currentDepth >= maxDepth) {
-      return [];
-    }
-
-    List<TreeNode<FileSystemEntity>> nodes = [];
+  Future<void> _getNodeChildren({
+    required t.TreeNode<FileSystemEntity> node,
+    required int currentDepth,
+    int maxDepth = 3,
+  }) async {
+    if (currentDepth >= maxDepth || node.data is! Directory) return;
+    var dir = node.data as Directory;
     try {
-      await for (var entity in directory.list()) {
-        if (entity is Directory) {
-          nodes.add(TreeItem(
-            data: entity,
-            children: await _getDirectoryContents(
-                entity, currentDepth + 1, maxDepth),
-          ));
-        } else if (entity is File) {
-          nodes.add(TreeItem(data: entity));
-        }
+      for (var entity in await dir.list().toList()) {
+        var childNode = t.TreeNode(data: entity);
+        node.add(childNode);
+        await _getNodeChildren(node: childNode, currentDepth: currentDepth + 1);
       }
     } catch (e) {
       print('Error listing directory: $e');
     }
-    return nodes;
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -73,32 +65,35 @@ class _ContentPanelState extends State<ContentPanel> {
           ]),
         ),
         Expanded(
-          child: TreeView(
-            recursiveSelection: false,
-            nodes: _fileTree,
-            onSelectionChanged: TreeView.defaultSelectionHandler(
-              _fileTree,
-              (value) {
-                setState(() {
-                  _fileTree = value;
-                });
-              },
+          child: t.TreeView.simple<FileSystemEntity>(
+            showRootNode: false,
+            scrollController: t.AutoScrollController(),
+            tree: _tree,
+            expansionIndicatorBuilder: (context, node) =>
+                t.ChevronIndicator.rightDown(
+              tree: node,
+              alignment: Alignment.centerLeft,
+              // padding: const EdgeInsets.all(8),
             ),
+            indentation: const t.Indentation(style: t.IndentStyle.roundJoint),
             builder: (context, node) {
-              return TreeItemView(
-                onPressed: () {},
-                leading: node.data is Directory
-                    ? Icon(node.expanded
-                        ? BootstrapIcons.folder2Open
-                        : BootstrapIcons.folder2)
-                    : const Icon(BootstrapIcons.fileImage),
-                onExpand:
-                    TreeView.defaultItemExpandHandler(_fileTree, node, (value) {
-                  setState(() {
-                    _fileTree = value;
-                  });
-                }),
-                child: Text(node.data.path.split('/').last),
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 0, 4),
+                child: material.Row(
+                  children: [
+                    Icon(node.data is File
+                        ? Icons.insert_drive_file
+                        : node.isExpanded
+                            ? Icons.folder_open
+                            : Icons.folder),
+                    Expanded(
+                      child: Text(
+                        node.data?.path.split('/').last ?? '',
+                        maxLines: 1,
+                      ),
+                    ),
+                  ],
+                ),
               );
             },
           ),
