@@ -1,22 +1,19 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../model/panel_model.dart';
+import '../state/panel_state.dart';
 import 'tabs/tabs_view.dart';
 
-class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+class WindowView extends StatefulWidget {
+  const WindowView({super.key});
 
   @override
-  State<MainPage> createState() => _MainPageState();
+  State<WindowView> createState() => _WindowViewState();
 }
 
-class _MainPageState extends State<MainPage> {
-  bool _expanded = false;
-  int? _index = 0;
-  bool _showLeft = true;
-  bool _showRight = true;
-  bool _showBottom = true;
-  DateTime _lastTapTime = DateTime(0);
+class _WindowViewState extends State<WindowView> {
+  DateTime _lastBarTapTime = DateTime(0);
 
   @override
   Widget build(BuildContext context) {
@@ -32,17 +29,13 @@ class _MainPageState extends State<MainPage> {
                   labelType: NavigationLabelType.expanded,
                   labelPosition: NavigationLabelPosition.bottom,
                   alignment: NavigationRailAlignment.start,
-                  expanded: _expanded,
-                  index: _index,
-                  onSelected: (value) {
+                  expanded: PanelState.expandLeft,
+                  index: PanelState.showLeft
+                      ? PanelState.leftPanels.indexOf(PanelState.leftPanel)
+                      : null,
+                  onSelected: (index) {
                     setState(() {
-                      if (value == _index) {
-                        _index = null;
-                        _showLeft = !_showLeft;
-                      } else {
-                        _index = value;
-                        _showLeft = true;
-                      }
+                      PanelState.setLeftPanel(index);
                     });
                   },
                   children: [
@@ -51,20 +44,13 @@ class _MainPageState extends State<MainPage> {
                       label: const Text('收起'),
                       onPressed: () {
                         setState(() {
-                          _expanded = !_expanded;
+                          PanelState.expandLeft = !PanelState.expandLeft;
                         });
                       },
                       child: const Icon(Icons.menu),
                     ),
-                    NavigationDivider(color: Colors.slate[300]),
-                    _buildButton(_NavItem.values[0]),
-                    _buildButton(_NavItem.values[1]),
-                    _buildButton(_NavItem.values[2]),
-                    _buildButton(_NavItem.values[3]),
-                    _buildButton(_NavItem.values[4]),
-                    NavigationDivider(color: Colors.slate[300]),
-                    _buildButton(_NavItem.values[5]),
-                    _buildButton(_NavItem.values[6]),
+                    for (var panel in PanelState.leftPanels)
+                      _panelButton(panel),
                   ],
                 ),
                 Expanded(
@@ -77,15 +63,13 @@ class _MainPageState extends State<MainPage> {
                       Axis.vertical,
                     ),
                     children: [
-                      if (_showLeft)
+                      if (PanelState.showLeft)
                         ResizablePane(
-                          minSize: 100,
+                          minSize: 150,
                           initialSize: 200,
                           child: Card(
                             padding: EdgeInsets.zero,
-                            child: Center(
-                              child: Text(_NavItem.values[_index ?? 0].title),
-                            ),
+                            child: PanelState.leftPanel.view,
                           ),
                         ),
                       ResizablePane.flex(
@@ -106,7 +90,7 @@ class _MainPageState extends State<MainPage> {
                                 child: TabsView(),
                               ),
                             ),
-                            if (_showBottom)
+                            if (PanelState.showBottom)
                               ResizablePane(
                                 minSize: 50,
                                 initialSize: 150,
@@ -128,7 +112,7 @@ class _MainPageState extends State<MainPage> {
                                               icon: Icon(Icons.close),
                                               onPressed: () {
                                                 setState(() {
-                                                  _showBottom = false;
+                                                  PanelState.showBottom = false;
                                                 });
                                               },
                                             ),
@@ -142,7 +126,7 @@ class _MainPageState extends State<MainPage> {
                           ],
                         ),
                       ),
-                      if (_showRight)
+                      if (PanelState.showRight)
                         ResizablePane(
                           minSize: 100,
                           initialSize: 200,
@@ -163,7 +147,7 @@ class _MainPageState extends State<MainPage> {
                                         icon: Icon(Icons.close),
                                         onPressed: () {
                                           setState(() {
-                                            _showRight = false;
+                                            PanelState.showRight = false;
                                           });
                                         },
                                       ),
@@ -200,7 +184,7 @@ class _MainPageState extends State<MainPage> {
       onTap: () async {
         var now = DateTime.now();
         // 计时器判断双击，解决单击响应慢的问题
-        if (now.difference(_lastTapTime).inMilliseconds < 300) {
+        if (now.difference(_lastBarTapTime).inMilliseconds < 300) {
           // TODO 鸿蒙不支持窗口管理
           try {
             bool isMaximized = await windowManager.isMaximized();
@@ -213,7 +197,7 @@ class _MainPageState extends State<MainPage> {
             print(e);
           }
         } else {
-          _lastTapTime = now;
+          _lastBarTapTime = now;
         }
       },
       child: Padding(
@@ -226,37 +210,39 @@ class _MainPageState extends State<MainPage> {
             IconButton.ghost(
               size: ButtonSize.small,
               icon: Icon(
-                _showLeft ? LucideIcons.panelLeftClose : LucideIcons.panelLeft,
+                PanelState.showLeft
+                    ? LucideIcons.panelLeftClose
+                    : LucideIcons.panelLeft,
               ),
               onPressed: () {
                 setState(() {
-                  _showLeft = !_showLeft;
+                  PanelState.showLeft = !PanelState.showLeft;
                 });
               },
             ),
             IconButton.ghost(
               size: ButtonSize.small,
               icon: Icon(
-                _showBottom
+                PanelState.showBottom
                     ? LucideIcons.panelBottomClose
                     : LucideIcons.panelBottom,
               ),
               onPressed: () {
                 setState(() {
-                  _showBottom = !_showBottom;
+                  PanelState.showBottom = !PanelState.showBottom;
                 });
               },
             ),
             IconButton.ghost(
               size: ButtonSize.small,
               icon: Icon(
-                _showRight
+                PanelState.showRight
                     ? LucideIcons.panelRightClose
                     : LucideIcons.panelRight,
               ),
               onPressed: () {
                 setState(() {
-                  _showRight = !_showRight;
+                  PanelState.showRight = !PanelState.showRight;
                 });
               },
             ),
@@ -266,7 +252,7 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  NavigationItem _buildButton(_NavItem nav) {
+  NavigationItem _panelButton(Panel nav) {
     return NavigationItem(
       label: Text(nav.title),
       alignment: Alignment.center,
@@ -274,19 +260,4 @@ class _MainPageState extends State<MainPage> {
       child: nav.icon,
     );
   }
-}
-
-enum _NavItem {
-  contents('目录', Icon(Icons.file_copy_outlined)),
-  search('搜索', Icon(Icons.search_outlined)),
-  code('代码管理', Icon(LucideIcons.gitFork)),
-  debug('运行调试', Icon(LucideIcons.bugPlay)),
-  remote('远程资源', Icon(RadixIcons.cardStackMinus)),
-  plugin('插件', Icon(RadixIcons.dashboard)),
-  test('测试', Icon(LucideIcons.testTubeDiagonal)),
-  ;
-
-  final String title;
-  final Widget icon;
-  const _NavItem(this.title, this.icon);
 }
