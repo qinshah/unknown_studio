@@ -14,7 +14,8 @@ class ContentPanel extends StatefulWidget {
 }
 
 class _ContentPanelState extends State<ContentPanel> {
-  t.TreeNode<FileSystemEntity> _tree = t.TreeNode.root(data: Directory('/'));
+  t.TreeNode<FileSystemEntity> _root = t.TreeNode.root(data: Directory('/'));
+  late t.TreeNode<FileSystemEntity> _hoverNode = _root;
 
   @override
   void initState() {
@@ -23,29 +24,46 @@ class _ContentPanelState extends State<ContentPanel> {
   }
 
   void _initFileTree() async {
-    final tree = t.TreeNode.root(data: Directory('/'));
-    await _getNodeChildren(node: tree, currentDepth: 0);
+    final root = t.TreeNode.root(data: Directory('/'));
+    await _getChildren(root, startDepth: 0, endDepth: 2);
     setState(() {
-      _tree = tree;
+      _root = root;
     });
   }
 
-  Future<void> _getNodeChildren({
-    required t.TreeNode<FileSystemEntity> node,
-    required int currentDepth,
-    int maxDepth = 3,
+  Future<void> _getChildChildren(t.TreeNode<FileSystemEntity> node) async {
+    for (var child in node.children.values) {
+      if (child.children.isEmpty) {
+        final entity = (child as t.TreeNode<FileSystemEntity>).data;
+        final newChild = t.TreeNode(data: entity);
+        await _getChildren(newChild, startDepth: 1, endDepth: 2);
+        setState(() {
+          child = child as t.TreeNode<FileSystemEntity>;
+          child.addAll(newChild.childrenAsList);
+        });
+      }
+    }
+  }
+
+  Future<void> _getChildren(
+    t.TreeNode<FileSystemEntity> node, {
+    required int startDepth,
+    required int endDepth,
   }) async {
-    if (currentDepth >= maxDepth || node.data is! Directory) return;
+    if (startDepth >= endDepth || node.data is! Directory) return;
     var dir = node.data as Directory;
     try {
       for (var entity in await dir.list().toList()) {
         var childNode = t.TreeNode(data: entity);
+        childNode.expansionNotifier.value = false;
         node.add(childNode);
-        await _getNodeChildren(node: childNode, currentDepth: currentDepth + 1);
+        await _getChildren(
+          childNode,
+          startDepth: startDepth + 1,
+          endDepth: endDepth,
+        );
       }
-    } catch (e) {
-      print('Error listing directory: $e');
-    }
+    } catch (_) {}
   }
 
   @override
@@ -68,7 +86,12 @@ class _ContentPanelState extends State<ContentPanel> {
           child: t.TreeView.simple<FileSystemEntity>(
             showRootNode: false,
             scrollController: t.AutoScrollController(),
-            tree: _tree,
+            tree: _root,
+            expansionBehavior: t.ExpansionBehavior.snapToTop,
+            onItemTap: (node) {
+              _hoverNode = node;
+              _getChildChildren(node);
+            },
             expansionIndicatorBuilder: (context, node) =>
                 t.ChevronIndicator.rightDown(
               tree: node,
@@ -77,23 +100,36 @@ class _ContentPanelState extends State<ContentPanel> {
             ),
             indentation: const t.Indentation(style: t.IndentStyle.roundJoint),
             builder: (context, node) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 0, 4),
-                child: material.Row(
-                  children: [
-                    Icon(node.data is File
-                        ? Icons.insert_drive_file
-                        : node.isExpanded
-                            ? Icons.folder_open
-                            : Icons.folder),
-                    Expanded(
-                      child: Text(
-                        node.data?.path.split('/').last ?? '',
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
+              final hoverNotify = ValueNotifier(node == _hoverNode);
+              return MouseRegion(
+                onHover: (event) => hoverNotify.value = true,
+                onExit: (event) => hoverNotify.value = false,
+                cursor: SystemMouseCursors.click,
+                child: ValueListenableBuilder(
+                    valueListenable: hoverNotify,
+                    builder: (context, value, _) {
+                      return ColoredBox(
+                        color: value ? Colors.blue[50] : Colors.transparent,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 0, 4),
+                          child: material.Row(
+                            children: [
+                              Icon(node.data is File
+                                  ? Icons.insert_drive_file
+                                  : node.isExpanded
+                                      ? Icons.folder_open
+                                      : Icons.folder),
+                              Expanded(
+                                child: Text(
+                                  node.data?.path.split('/').last ?? '',
+                                  maxLines: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
               );
             },
           ),
