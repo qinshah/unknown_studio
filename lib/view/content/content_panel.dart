@@ -4,6 +4,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
 import 'package:open_file_ohos/open_file_ohos.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import '../../model/panel_model.dart';
@@ -24,7 +25,11 @@ class _ContentPanelState extends State<ContentPanel> {
     super.initState();
   }
 
-  _openCentent() async {
+  Future<void> _openCentent() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.manageExternalStorage.request();
+      if (status.isDenied) return;
+    }
     var dirPath = await getDirectoryPath();
     if (dirPath == null) return;
     setState(() {

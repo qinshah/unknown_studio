@@ -16,6 +16,6 @@ class PanelState {
     }
   }
 
-  static bool showRight = true;
+  static bool showRight = false;
   static bool showBottom = true;
 }

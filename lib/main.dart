@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -5,6 +6,8 @@ import 'view/window_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 设置状态栏全屏显示模式
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   // TODO 鸿蒙不支持窗口管理
   try {
     await windowManager.ensureInitialized();

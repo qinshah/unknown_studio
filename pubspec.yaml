@@ -22,6 +22,7 @@ dependencies:
     git:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       path: "packages/file_selector/file_selector"
+  permission_handler: ^12.0.1
 dev_dependencies:
   flutter_lints: ^5.0.0
 
