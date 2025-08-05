@@ -1,6 +1,6 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
-import '../view/content/content_panel.dart';
+import '../view/content_panel/content_panel.dart';
 
 enum Panel {
   content(

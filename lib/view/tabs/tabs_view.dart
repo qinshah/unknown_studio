@@ -1,4 +1,11 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart' as m;
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+
+import '../../model/entity_node.dart';
+import '../../state/tabs_state.dart';
+import '../file/file_view.dart';
 
 class TabsView extends StatefulWidget {
   const TabsView({super.key});
@@ -8,111 +15,65 @@ class TabsView extends StatefulWidget {
 }
 
 class _TabsViewState extends State<TabsView> {
-  List<TabPaneData<MyTab>> _tabs = [
-    TabPaneData(MyTab('页面1', '页面1内容')),
-    TabPaneData(MyTab('页面2', '页面2内容')),
-    TabPaneData(MyTab('页面3', '页面3内容')),
-  ];
-  late int _maxIndex = _tabs.length;
-
-  void _add() {
-    _maxIndex++;
-    setState(() {
-      if (_tabs.isNotEmpty) {
-        _index++;
-      }
-      _tabs.insert(
-        _index,
-        TabPaneData(MyTab('页面$_maxIndex', '页面$_maxIndex内容')),
-      );
-    });
-  }
-
-  int _index = 0;
-  double _logoSize = 100;
-
-  TabItem _buildTabItem(int index) {
-    final data = _tabs[index].data;
-    return TabItem(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 120),
-        child: GestureDetector(
-          onTertiaryTapDown: (_) {
-            setState(() {
-              _tabs.removeAt(index);
-            });
-          },
-          child: Label(
-            trailing: IconButton.ghost(
-              shape: ButtonShape.circle,
-              size: ButtonSize.xSmall,
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                setState(() {
-                  _tabs.removeAt(index);
-                });
-              },
-            ),
-            child: Text(data.title),
-          ),
-        ),
-      ),
-    );
-  }
-
-  int get _focused {
-    if (_tabs.isEmpty) return 0;
-    _index = _index.clamp(0, _tabs.length - 1);
-    return _index;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.accent,
-      child: TabPane<MyTab>(
-        items: _tabs,
-        itemBuilder: (context, item, index) {
-          return _buildTabItem(index);
+      child: ListenableBuilder(
+        listenable: TabsState(),
+        builder: (BuildContext context, _) {
+          return TabPane<EntityNode>(
+            items: TabsState().tabs,
+            itemBuilder: (context, item, index) => _tabView(index),
+            focused: TabsState().focused,
+            onFocused: (value) {
+              setState(() {
+                TabsState().index = value;
+              });
+            },
+            onSort: (value) {
+              setState(() {
+                TabsState().tabs = value;
+              });
+            },
+            child: TabsState().tabs.isEmpty
+                ? Center(child: Text('从目录选择文件'))
+                : FileView(
+                    TabsState().tabs[TabsState().focused].data.entity as File,
+                  ),
+          );
         },
-        focused: _focused,
-        onFocused: (value) {
-          setState(() {
-            _index = value;
-          });
-        },
-        onSort: (value) {
-          setState(() {
-            _tabs = value;
-          });
-        },
-        trailing: [
-          IconButton.ghost(
-            icon: const Icon(Icons.add),
-            size: ButtonSize.small,
-            density: ButtonDensity.iconDense,
-            onPressed: _add,
-          )
-        ],
-        child: _tabs.isEmpty
-            ? Center(
-                child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _logoSize = _logoSize == 100 ? 666 : 100;
-                  });
-                },
-                child: FlutterLogo(size: _logoSize),
-              ))
-            : Center(child: Text(_tabs[_index].data.content)),
       ),
     );
   }
-}
 
-class MyTab {
-  final String title;
-  final String content;
-  MyTab(this.title, this.content);
+  TabItem _tabView(int index) {
+    final entityNode = TabsState().tabs[index].data;
+    return TabItem(
+      // TODO 添加Tab hover效果
+      child: GestureDetector(
+        onTertiaryTapDown: (_) {
+          setState(() {
+            TabsState().tabs.removeAt(index);
+          });
+        },
+        child: Row(
+          children: [
+            Text(entityNode.entity.path.split('/').last),
+            IconButton.ghost(
+              shape: ButtonShape.circle,
+              size: ButtonSize.small,
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  TabsState().tabs.removeAt(index);
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

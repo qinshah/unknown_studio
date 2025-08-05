@@ -8,7 +8,9 @@ import 'package:open_file_ohos/open_file_ohos.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
+import '../../model/entity_node.dart';
 import '../../model/panel_model.dart';
+import '../../state/tabs_state.dart';
 
 class ContentPanel extends StatefulWidget {
   const ContentPanel({super.key});
@@ -18,8 +20,8 @@ class ContentPanel extends StatefulWidget {
 }
 
 class _ContentPanelState extends State<ContentPanel> {
-  Node? _root;
-  TreeController<Node>? _treeController;
+  EntityNode? _root;
+  TreeController<EntityNode>? _treeController;
 
   @override
   void initState() {
@@ -34,10 +36,10 @@ class _ContentPanelState extends State<ContentPanel> {
     var dirPath = await getDirectoryPath();
     if (dirPath == null) return;
     setState(() {
-      _root = Node(Directory(dirPath));
+      _root = EntityNode(Directory(dirPath));
     });
     _treeController?.dispose();
-    _treeController = TreeController<Node>(
+    _treeController = TreeController<EntityNode>(
       roots: _root!.children,
       childrenProvider: (node) => node.children,
     );
@@ -48,7 +50,7 @@ class _ContentPanelState extends State<ContentPanel> {
 
 // TODO 排序功能
   Future<void> _loadChildren(
-    Node node, {
+    EntityNode node, {
     required int loadedDepth,
     required int depth,
   }) async {
@@ -57,7 +59,7 @@ class _ContentPanelState extends State<ContentPanel> {
     print('加载${entity.path}目录');
     try {
       await for (var entity in entity.list()) {
-        var childNode = Node(entity);
+        var childNode = EntityNode(entity);
         node.children.add(childNode);
         if (entity is Directory) {
           await _loadChildren(
@@ -117,11 +119,9 @@ class _ContentPanelState extends State<ContentPanel> {
                       child: m.InkWell(
                         hoverColor: Colors.gray[100],
                         splashFactory: m.NoSplash.splashFactory, // 禁用涟漪效果
-                        onTap: () => _treeController?.toggleExpansion(node),
-                        onLongPress: () {
-                          if (entity is File) {
-                            OpenFile.open(entity.path);
-                          }
+                        onTap: () {
+                          _treeController?.toggleExpansion(node);
+                          if (node.entity is File) TabsState().add(node);
                         },
                         child: SizedBox(
                           height: 25,
@@ -170,18 +170,5 @@ class _ContentPanelState extends State<ContentPanel> {
         ),
       ],
     );
-  }
-}
-
-class Node {
-  final FileSystemEntity entity;
-  List<Node> children = [];
-  bool childrenLoaded = false;
-
-  Node(this.entity);
-
-  @override
-  String toString() {
-    return entity.path;
   }
 }
