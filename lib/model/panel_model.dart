@@ -5,43 +5,43 @@ import '../view/content/content_panel.dart';
 enum Panel {
   content(
     '目录',
-    Icon(Icons.file_copy_outlined),
+    Icons.file_copy_outlined,
     ContentPanel(),
   ),
   search(
     '搜索',
-    Icon(Icons.search_outlined),
+    Icons.search_outlined,
     Center(child: Text('搜索')),
   ),
   code(
     '代码管理',
-    Icon(LucideIcons.gitFork),
+    LucideIcons.gitFork,
     Center(child: Text('代码管理')),
   ),
   debug(
     '运行调试',
-    Icon(LucideIcons.bugPlay),
+    LucideIcons.bugPlay,
     Center(child: Text('运行调试')),
   ),
   remote(
     '远程资源',
-    Icon(RadixIcons.cardStackMinus),
+    RadixIcons.cardStackMinus,
     Center(child: Text('远程资源')),
   ),
   plugin(
     '插件',
-    Icon(RadixIcons.dashboard),
+    RadixIcons.dashboard,
     Center(child: Text('插件')),
   ),
   test(
     '测试',
-    Icon(LucideIcons.testTubeDiagonal),
+    LucideIcons.testTubeDiagonal,
     Center(child: Text('测试')),
   ),
   ;
 
   final String title;
-  final Widget icon;
+  final IconData iconData;
   final Widget view;
-  const Panel(this.title, this.icon, this.view);
+  const Panel(this.title, this.iconData, this.view);
 }

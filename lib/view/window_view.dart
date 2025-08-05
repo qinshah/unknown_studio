@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../model/panel_model.dart';
 import '../state/panel_state.dart';
 import 'tabs/tabs_view.dart';
 
@@ -16,6 +15,8 @@ class WindowView extends StatefulWidget {
 class _WindowViewState extends State<WindowView> {
   DateTime _lastBarTapTime = DateTime(0);
   bool _isImmersiveSticky = true;
+  int? _leftHoverPanleIndex;
+  PointerHoverEvent? _leftHoverEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -28,34 +29,30 @@ class _WindowViewState extends State<WindowView> {
             Expanded(
               child: Row(
                 children: [
-                  NavigationRail(
-                    padding: EdgeInsets.all(4),
-                    labelType: NavigationLabelType.expanded,
-                    labelPosition: NavigationLabelPosition.bottom,
-                    alignment: NavigationRailAlignment.start,
-                    expanded: PanelState.expandLeft,
-                    index: PanelState.showLeft
-                        ? PanelState.leftPanels.indexOf(PanelState.leftPanel)
-                        : null,
-                    onSelected: (index) {
-                      setState(() {
-                        PanelState.setLeftPanel(index);
-                      });
-                    },
-                    children: [
-                      NavigationButton(
-                        alignment: Alignment.center,
-                        label: const Text('收起'),
-                        onPressed: () {
-                          setState(() {
-                            PanelState.expandLeft = !PanelState.expandLeft;
-                          });
-                        },
-                        child: const Icon(Icons.menu),
+                  MouseRegion(
+                    onEnter: (_) =>
+                        setState(() => PanelState.expandLeftBar = true),
+                    onExit: (_) =>
+                        setState(() => PanelState.expandLeftBar = false),
+                    child: NavigationRail(
+                      padding: EdgeInsets.all(2),
+                      labelType: NavigationLabelType.expanded,
+                      labelPosition: NavigationLabelPosition.end,
+                      alignment: NavigationRailAlignment.start,
+                      expanded: PanelState.expandLeftBar,
+                      index: PanelState.showLeft
+                          ? PanelState.leftPanels.indexOf(PanelState.leftPanel)
+                          : null,
+                      onSelected: (index) {
+                        setState(() {
+                          PanelState.setLeftPanel(index);
+                        });
+                      },
+                      children: List.generate(
+                        PanelState.leftPanels.length,
+                        (index) => _panelButton(index),
                       ),
-                      for (var panel in PanelState.leftPanels)
-                        _panelButton(panel),
-                    ],
+                    ),
                   ),
                   Expanded(
                     child: ResizablePanel.horizontal(
@@ -268,12 +265,60 @@ class _WindowViewState extends State<WindowView> {
     );
   }
 
-  NavigationItem _panelButton(Panel nav) {
+  double _calculateIconSize(int index) {
+    if (_leftHoverPanleIndex == null || _leftHoverEvent == null) {
+      return 24.0; // 默认图标大小
+    }
+
+    // 计算当前图标的垂直位置（假设每个图标间距为 56 像素）
+    double iconCenterY = (index + 0.5) * 56.0;
+
+    // 获取鼠标的垂直位置（相对于NavigationRail的局部坐标）
+    double mouseY = _leftHoverEvent!.localPosition.dy;
+
+    // 计算距离
+    double distance = (iconCenterY - mouseY).abs();
+
+    // Mac程序坞效果：距离越近放大越多
+    double maxSize = 48.0; // 最大放大尺寸
+    double minSize = 24.0; // 最小（默认）尺寸
+    double maxDistance = 84.0; // 影响范围（约1.5个图标的距离）
+
+    if (distance <= maxDistance) {
+      // 使用平滑的缩放曲线
+      double scale = 1.0 - (distance / maxDistance);
+      scale = scale * scale; // 平方函数使效果更自然
+      print('图标$index');
+      print(minSize + (maxSize - minSize) * scale);
+      return minSize + (maxSize - minSize) * scale;
+    }
+
+    return minSize;
+  }
+
+  NavigationItem _panelButton(int index) {
+    var panel = PanelState.leftPanels[index];
     return NavigationItem(
-      label: Text(nav.title),
-      alignment: Alignment.center,
+      label: Text(panel.title),
+      alignment: Alignment.centerLeft,
       selectedStyle: const ButtonStyle.primaryIcon(),
-      child: nav.icon,
+      child: MouseRegion(
+        // onEnter: (event) {
+        //   setState(() {
+        //     _leftHoverPanleIndex = index;
+        //   });
+        // },
+        // onHover: (event) {
+        //   setState(() {
+        //     _leftHoverPanleIndex = index;
+        //     _leftHoverEvent = event;
+        //   });
+        // },
+        // onExit: (event) => setState(() {
+        //   _leftHoverPanleIndex = null;
+        // }),
+        child: Icon(panel.iconData),
+      ),
     );
   }
 }
