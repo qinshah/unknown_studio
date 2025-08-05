@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart' as m;
-import 'package:two_dimensional_scrollables/two_dimensional_scrollables.dart'
-    as t;
+import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import '../../model/panel_model.dart';
@@ -15,42 +14,41 @@ class ContentPanel extends StatefulWidget {
 }
 
 class _ContentPanelState extends State<ContentPanel> {
-  List<t.TreeViewNode<FileSystemEntity>>? _tree;
+  final _root = Node(Directory('/'));
+  late final TreeController<Node> _treeController = TreeController(
+    roots: _root.children,
+    childrenProvider: (node) => node.children,
+  );
 
-  var _treeController = t.TreeViewController();
   @override
   void initState() {
     super.initState();
-    _initTree();
-  }
-
-  void _initTree() async {
-    var root = t.TreeViewNode<FileSystemEntity>(Directory('/'));
-    await _getTree(root, currentDepth: 1, depth: 3);
-    setState(() {
-      _tree = root.children;
+    _loadChildren(_root, loadedDepth: 0, depth: 1).then((_) {
+      _treeController.rebuild();
     });
   }
 
-  Future<void> _getTree(
-    t.TreeViewNode<FileSystemEntity> root, {
-    required int currentDepth,
+  Future<void> _loadChildren(
+    Node node, {
+    required int loadedDepth,
     required int depth,
   }) async {
-    var content = root.content;
-    if (currentDepth >= depth || content is! Directory) return;
+    var entity = node.entity;
+    if (loadedDepth >= depth || entity is! Directory) return;
+    print('加载${entity.path}目录');
     try {
-      await for (var entity in content.list()) {
-        var child = t.TreeViewNode(entity);
-        root.children.add(child);
+      await for (var entity in entity.list()) {
+        var childNode = Node(entity);
+        node.children.add(childNode);
         if (entity is Directory) {
-          await _getTree(
-            child,
-            currentDepth: currentDepth + 1,
+          await _loadChildren(
+            childNode,
+            loadedDepth: loadedDepth + 1,
             depth: depth,
           );
         }
       }
+      node.childrenLoaded = true;
     } catch (e) {
       print(e);
     }
@@ -73,44 +71,74 @@ class _ContentPanelState extends State<ContentPanel> {
           ]),
         ),
         Expanded(
-          child: _tree == null
-              ? Center(child: Text('空'))
-              : t.TreeView(
-                  controller: _treeController,
-                  tree: _tree!,
-                  addRepaintBoundaries: false,
-                  treeNodeBuilder: (context, node, _) {
-                    return SizedBox(
-                      height: 2,
-                      width: MediaQuery.of(context).size.width,
-                      child: m.Material(
-                        color: Colors.transparent,
-                        child: m.InkWell(
-                          onTap: () => _treeController.toggleNode(node),
-                          child: Row(
-                            children: <Widget>[
-                              AnimatedRotation(
-                                turns: node.isExpanded ? 0.25 : 0.0,
-                                duration: const Duration(milliseconds: 200),
-                                curve: Curves.easeInOut,
-                                child: Icon(
-                                  RadixIcons.caretRight,
-                                  size: 16,
-                                  color: node.children.isEmpty
-                                      ? Colors.transparent
-                                      : null,
-                                ),
+          child: AnimatedTreeView(
+            treeController: _treeController,
+            nodeBuilder: (context, entry) {
+              final node = entry.node;
+              if (!node.childrenLoaded) {
+                _loadChildren(node, depth: 1, loadedDepth: 0).then((_) {
+                  node.childrenLoaded = true;
+                  _treeController.rebuild();
+                });
+              }
+              final entity = entry.node.entity;
+              return m.Material(
+                color: Colors.transparent,
+                child: m.InkWell(
+                  hoverColor: Colors.gray[100],
+                  splashFactory: m.NoSplash.splashFactory, // 禁用涟漪效果
+                  onTap: () => _treeController.toggleExpansion(node),
+                  child: SizedBox(
+                    height: 25,
+                    child: TreeIndentation(
+                      entry: entry,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: NeverScrollableScrollPhysics(),
+                        child: Row(
+                          children: [
+                            AnimatedRotation(
+                              turns: entry.isExpanded ? 0.25 : 0.0,
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              child: Icon(
+                                RadixIcons.caretRight,
+                                size: 16,
+                                color:
+                                    entity is File ? Colors.transparent : null,
                               ),
-                              Text(node.content.path.split('/').last),
-                            ],
-                          ),
+                            ),
+                            switch (entity is File ? null : entry.isExpanded) {
+                              null => Icon(RadixIcons.file),
+                              true => Icon(LucideIcons.folderOpen),
+                              false => Icon(LucideIcons.folder),
+                            },
+                            const SizedBox(width: 2),
+                            Text(entity.path.split('/').last),
+                          ],
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
+              );
+            },
+          ),
         ),
       ],
     );
+  }
+}
+
+class Node {
+  final FileSystemEntity entity;
+  List<Node> children = [];
+  bool childrenLoaded = false;
+
+  Node(this.entity);
+
+  @override
+  String toString() {
+    return entity.path;
   }
 }

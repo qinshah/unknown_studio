@@ -118,6 +118,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_fancy_tree_view2:
+    dependency: "direct main"
+    description:
+      name: flutter_fancy_tree_view2
+      sha256: "72f3acb1870c8e1b724907a16f6d6e5779b450da12b62ebbbd89fa692a93ba10"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.6.2"
   flutter_lints:
     dependency: "direct dev"
     description:
