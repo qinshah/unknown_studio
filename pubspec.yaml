@@ -15,7 +15,13 @@ dependencies:
   window_manager: ^0.5.1
   two_dimensional_scrollables: ^0.3.7
   flutter_fancy_tree_view2: ^1.6.2
-
+  # 两个版本都依赖，但使用的时候导入open_file_ohos就都能用
+  open_file: ^3.5.10 # 原生打开文件
+  open_file_ohos: # 鸿蒙原生打开文件
+  file_selector: # 文件选择器
+    git:
+      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+      path: "packages/file_selector/file_selector"
 dev_dependencies:
   flutter_lints: ^5.0.0
 
