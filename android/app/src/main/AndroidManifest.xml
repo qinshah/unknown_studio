@@ -5,7 +5,7 @@
     <!-- Android 10及以上需要的所有文件访问权限 -->
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
     <application
-        android:label="flutter_studio"
+        android:label="unknown_studio"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
