@@ -7,17 +7,15 @@ environment:
   sdk: ^3.6.2
 
 dependencies:
-  animated_tree_view: ^2.3.0
   flutter:
     sdk: flutter
   shadcn_flutter:
     git:
       url: https://github.com/qinshah/shadcn_flutter_ohos.git
   window_manager: ^0.5.1
+  two_dimensional_scrollables: ^0.3.7
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
   flutter_lints: ^5.0.0
 
 flutter:
