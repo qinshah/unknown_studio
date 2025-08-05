@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_icon/file_icon.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
@@ -45,6 +46,7 @@ class _ContentPanelState extends State<ContentPanel> {
     });
   }
 
+// TODO 排序功能
   Future<void> _loadChildren(
     Node node, {
     required int loadedDepth,
@@ -109,6 +111,7 @@ class _ContentPanelState extends State<ContentPanel> {
                       });
                     }
                     final entity = entry.node.entity;
+                    final entityName = entity.path.split('/').last;
                     return m.Material(
                       color: Colors.transparent,
                       child: m.InkWell(
@@ -130,10 +133,9 @@ class _ContentPanelState extends State<ContentPanel> {
                               child: Row(
                                 children: [
                                   entity is File
-                                      ? Icon(
-                                          LucideIcons.dot,
+                                      ? FileIcon(
+                                          entityName,
                                           size: 16,
-                                          color: Colors.gray[400],
                                         )
                                       : AnimatedRotation(
                                           turns: entry.isExpanded ? 0.25 : 0.0,
@@ -146,18 +148,16 @@ class _ContentPanelState extends State<ContentPanel> {
                                             color: Colors.gray[400],
                                           ),
                                         ),
-                                  switch (entity is File
-                                      ? null
-                                      : entry.isExpanded) {
-                                    null => Icon(
-                                        BootstrapIcons.fileEarmarkTextFill,
-                                        color: Colors.gray[400],
-                                      ),
-                                    true => Icon(LucideIcons.folderOpen),
-                                    false => Icon(LucideIcons.folder),
-                                  },
                                   const SizedBox(width: 2),
-                                  Text(entity.path.split('/').last),
+                                  Text(
+                                    entityName,
+                                    // 隐藏文件减弱视觉效果
+                                    style: TextStyle(
+                                      color: entityName[0] == '.'
+                                          ? Colors.gray
+                                          : null,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
