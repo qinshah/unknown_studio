@@ -8,7 +8,7 @@
 PRODUCT_NAME = unknown_studio
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.qshh.flutterStudio
+PRODUCT_BUNDLE_IDENTIFIER = com.qshh.unknownStudio
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.qshh. All rights reserved.

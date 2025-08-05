@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:window_manager/window_manager.dart';
@@ -22,6 +24,7 @@ class _WindowViewState extends State<WindowView> {
   Widget build(BuildContext context) {
     return SafeArea(
       top: !_isImmersiveSticky,
+      left: false,
       child: Scaffold(
         child: Column(
           children: [
@@ -217,7 +220,16 @@ class _WindowViewState extends State<WindowView> {
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
         child: Row(
           children: [
-            SizedBox(width: 80),
+            if (Platform.isMacOS) SizedBox(width: 80),
+            IconButton.ghost(
+              size: ButtonSize.small,
+              icon: Icon(LucideIcons.menu),
+              onPressed: () {
+                setState(() {
+                  PanelState.expandLeftBar = !PanelState.expandLeftBar;
+                });
+              },
+            ),
             Text('Studio'),
             Spacer(),
             IconButton.ghost(

@@ -1,4 +1,4 @@
-package com.qshh.flutter_studio
+package com.qshh.unknown_studio
 
 import io.flutter.embedding.android.FlutterActivity
 
