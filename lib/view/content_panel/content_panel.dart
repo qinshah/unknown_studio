@@ -4,7 +4,6 @@ import 'package:file_icon/file_icon.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
-import 'package:open_file_ohos/open_file_ohos.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
@@ -48,7 +47,6 @@ class _ContentPanelState extends State<ContentPanel> {
     });
   }
 
-// TODO 排序功能
   Future<void> _loadChildren(
     EntityNode node, {
     required int loadedDepth,
@@ -58,17 +56,30 @@ class _ContentPanelState extends State<ContentPanel> {
     if (loadedDepth >= depth || entity is! Directory) return;
     print('加载${entity.path}目录');
     try {
+      List<EntityNode> dirChildren = [];
+      List<EntityNode> fileChildren = [];
       await for (var entity in entity.list()) {
         var childNode = EntityNode(entity);
-        node.children.add(childNode);
         if (entity is Directory) {
+          dirChildren.add(childNode);
           await _loadChildren(
             childNode,
             loadedDepth: loadedDepth + 1,
             depth: depth,
           );
+        } else {
+          fileChildren.add(childNode);
         }
       }
+      // 按字母排序后又将文件夹排在前面
+      dirChildren.sort((a, b) =>
+          a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
+      fileChildren.sort((a, b) =>
+          a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
+      // 不能使用=赋值，要用add，不然渲染不出来
+      node.children.addAll(dirChildren);
+      node.children.addAll(fileChildren);
+
       node.childrenLoaded = true;
     } catch (e) {
       print(e);
@@ -100,7 +111,9 @@ class _ContentPanelState extends State<ContentPanel> {
           child: _root == null || _treeController == null
               ? Center(
                   child: Button.primary(
-                      onPressed: _openCentent, child: Text('打开目录')),
+                    onPressed: _openCentent,
+                    child: Text('打开目录'),
+                  ),
                 )
               : AnimatedTreeView(
                   treeController: _treeController!,
@@ -133,10 +146,7 @@ class _ContentPanelState extends State<ContentPanel> {
                               child: Row(
                                 children: [
                                   entity is File
-                                      ? FileIcon(
-                                          entityName,
-                                          size: 16,
-                                        )
+                                      ? FileIcon(entityName, size: 16)
                                       : AnimatedRotation(
                                           turns: entry.isExpanded ? 0.25 : 0.0,
                                           duration:
