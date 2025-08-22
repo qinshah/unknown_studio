@@ -32,40 +32,12 @@ class _WindowViewState extends State<WindowView> {
             Expanded(
               child: Row(
                 children: [
-                  MouseRegion(
-                    onEnter: (_) =>
-                        setState(() => PanelState.expandLeftBar = true),
-                    onExit: (_) =>
-                        setState(() => PanelState.expandLeftBar = false),
-                    child: NavigationRail(
-                      padding: EdgeInsets.all(2),
-                      labelType: NavigationLabelType.expanded,
-                      labelPosition: NavigationLabelPosition.end,
-                      alignment: NavigationRailAlignment.start,
-                      expanded: PanelState.expandLeftBar,
-                      index: PanelState.showLeft
-                          ? PanelState.leftPanels.indexOf(PanelState.leftPanel)
-                          : null,
-                      onSelected: (index) {
-                        setState(() {
-                          PanelState.setLeftPanel(index);
-                        });
-                      },
-                      children: List.generate(
-                        PanelState.leftPanels.length,
-                        (index) => _panelButton(index),
-                      ),
-                    ),
-                  ),
+                  _leftBar(),
                   Expanded(
                     child: ResizablePanel.horizontal(
-                      draggerBuilder: (context) {
-                        return const HorizontalResizableDragger();
-                      },
-                      dividerBuilder: (context) => _divider(
-                        context,
-                        Axis.vertical,
-                      ),
+                      draggerBuilder: (context) =>
+                          const HorizontalResizableDragger(),
+                      dividerBuilder: (context) => _divider(Axis.vertical),
                       children: [
                         if (PanelState.showLeft)
                           ResizablePane(
@@ -83,10 +55,8 @@ class _WindowViewState extends State<WindowView> {
                             draggerBuilder: (context) {
                               return const HorizontalResizableDragger();
                             },
-                            dividerBuilder: (context) => _divider(
-                              context,
-                              Axis.horizontal,
-                            ),
+                            dividerBuilder: (context) =>
+                                _divider(Axis.horizontal),
                             children: [
                               ResizablePane.flex(
                                 child: ClipRRect(
@@ -175,7 +145,33 @@ class _WindowViewState extends State<WindowView> {
     );
   }
 
-  Widget? _divider(context, direction) {
+  Widget _leftBar() {
+    return MouseRegion(
+      onEnter: (_) => setState(() => PanelState.expandLeftBar = true),
+      onExit: (_) => setState(() => PanelState.expandLeftBar = false),
+      child: NavigationRail(
+        padding: EdgeInsets.all(2),
+        labelType: NavigationLabelType.expanded,
+        labelPosition: NavigationLabelPosition.end,
+        alignment: NavigationRailAlignment.start,
+        expanded: PanelState.expandLeftBar,
+        index: PanelState.showLeft
+            ? PanelState.leftPanels.indexOf(PanelState.leftPanel)
+            : null,
+        onSelected: (index) {
+          setState(() {
+            PanelState.setLeftPanel(index);
+          });
+        },
+        children: List.generate(
+          PanelState.leftPanels.length,
+          (index) => _panelButton(index),
+        ),
+      ),
+    );
+  }
+
+  Widget? _divider(direction) {
     return direction == Axis.horizontal
         ? const SizedBox(height: 2)
         : const SizedBox(width: 2);

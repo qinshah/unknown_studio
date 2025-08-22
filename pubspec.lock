@@ -127,7 +127,7 @@ packages:
     description:
       path: "packages/file_selector/file_selector"
       ref: HEAD
-      resolved-ref: "990a80a3a87a6be86488687710433e155ba88f9b"
+      resolved-ref: "34dd2b4ce6a6a9fe5f298d75f8a007b0de0789d2"
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
     source: git
     version: "1.0.0"
@@ -135,10 +135,10 @@ packages:
     dependency: transitive
     description:
       name: file_selector_android
-      sha256: "6bba3d590ee9462758879741abc132a19133600dd31832f55627442f1ebd7b54"
+      sha256: "3015702ab73987000e7ff2df5ddc99666d2bcd65cdb243f59da35729d3be6cff"
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.5.1+14"
+    version: "0.5.1+15"
   file_selector_ios:
     dependency: transitive
     description:
@@ -168,7 +168,7 @@ packages:
     description:
       path: "packages/file_selector/file_selector_ohos"
       ref: HEAD
-      resolved-ref: "990a80a3a87a6be86488687710433e155ba88f9b"
+      resolved-ref: "34dd2b4ce6a6a9fe5f298d75f8a007b0de0789d2"
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
     source: git
     version: "0.5.0+2"
@@ -234,10 +234,10 @@ packages:
     dependency: transitive
     description:
       name: http
-      sha256: "2c11f3f94c687ee9bad77c171151672986360b2b001d109814ee7140b2cf261b"
+      sha256: bb2ce4590bc2667c96f318d68cac1b5a7987ec819351d32b1c987239a815e007
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.4.0"
+    version: "1.5.0"
   http_parser:
     dependency: transitive
     description:

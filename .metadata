@@ -15,24 +15,6 @@ migration:
     - platform: root
       create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
       base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-    - platform: android
-      create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-      base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-    - platform: ios
-      create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-      base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-    - platform: linux
-      create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-      base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-    - platform: macos
-      create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-      base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-    - platform: web
-      create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-      base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-    - platform: windows
-      create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
-      base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
     - platform: ohos
       create_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
       base_revision: 5447ee0253644c5015dc8077df17dd4967b80c7e
