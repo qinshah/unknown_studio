@@ -10,10 +10,10 @@ class ContentState extends ChangeNotifier {
 
   EntityNode? root;
   TreeController<EntityNode>? treeController;
-  
+
   Future<void> openContent(String? dirPath) async {
     if (dirPath == null) return;
-    
+
     root = EntityNode(Directory(dirPath));
     treeController?.dispose();
     treeController = TreeController<EntityNode>(
@@ -64,14 +64,14 @@ class ContentState extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 2));
         node.children.add(childNode);
         notifyListeners();
-        
+
         if (entity is Directory) {
           dirChildren.add(childNode);
         } else {
           fileChildren.add(childNode);
         }
       }
-      
+
       dirChildren.sort((a, b) =>
           a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
       fileChildren.sort((a, b) =>

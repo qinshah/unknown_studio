@@ -2,7 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'view/window_view.dart';
+import 'view/app_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,10 +34,10 @@ class MainApp extends StatelessWidget {
     return ShadcnApp(
       debugShowCheckedModeBanner: false,
       title: 'Studio',
-      home: WindowView(),
+      home: AppView(),
       theme: ThemeData(
         colorScheme: ColorSchemes.lightBlue.copyWith(
-          background: () => Colors.gray[200],
+          background: () => Colors.gray.shade300,
         ),
         radius: 0.5,
       ),
