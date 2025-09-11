@@ -56,8 +56,10 @@ class _ContentPanelState extends State<ContentPanel> {
     if (loadedDepth >= depth || entity is! Directory) return;
     print('加载${entity.path}目录');
 
+    final childCount = await entity.list().length;
     setState(() {
-      node.isLoading = true;
+      node.children.clear();
+      node.childrenLength = childCount;
     });
 
     try {
@@ -65,15 +67,22 @@ class _ContentPanelState extends State<ContentPanel> {
       List<EntityNode> fileChildren = [];
       await for (var entity in entity.list()) {
         var childNode = EntityNode(entity);
+        // TODO：取消耗时模拟
+        await Future.delayed(const Duration(milliseconds: 2));
+        setState(() {
+          // 先添加到children以更新加载进度
+          node.children.add(childNode);
+        });
         if (entity is Directory) {
           dirChildren.add(childNode);
-          if (loadedDepth + 1 < depth) {
-            await _loadChildren(
-              childNode,
-              loadedDepth: loadedDepth + 1,
-              depth: depth,
-            );
-          }
+          // TODO: 需要加载更深时取消注释
+          // if (loadedDepth + 1 < depth) {
+          //   await _loadChildren(
+          //     childNode,
+          //     loadedDepth: loadedDepth + 1,
+          //     depth: depth,
+          //   );
+          // }
         } else {
           fileChildren.add(childNode);
         }
@@ -88,10 +97,6 @@ class _ContentPanelState extends State<ContentPanel> {
       node.children.addAll(fileChildren);
     } catch (e) {
       print(e);
-    } finally {
-      setState(() {
-        node.isLoading = false;
-      });
     }
   }
 
@@ -137,7 +142,7 @@ class _ContentPanelState extends State<ContentPanel> {
                         hoverColor: Colors.gray[100],
                         splashFactory: m.NoSplash.splashFactory,
                         onTap: () async {
-                          if (entity is Directory && !node.isLoading) {
+                          if (entity is Directory) {
                             if (!entry.isExpanded) {
                               await _loadChildren(node,
                                   depth: 1, loadedDepth: 0);
@@ -159,12 +164,16 @@ class _ContentPanelState extends State<ContentPanel> {
                                 children: [
                                   entity is File
                                       ? FileIcon(entityName, size: 16)
-                                      : node.isLoading
-                                          ? SizedBox(
+                                      : node.children.length <
+                                              node.childrenLength
+                                          ? Container(
+                                              padding: const EdgeInsets.all(2),
                                               width: 16,
                                               height: 16,
                                               child:
                                                   m.CircularProgressIndicator(
+                                                value: node.children.length /
+                                                    node.childrenLength,
                                                 strokeWidth: 2,
                                               ),
                                             )
