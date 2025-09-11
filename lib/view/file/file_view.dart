@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:open_file_ohos/open_file_ohos.dart';
+import 'package:open_file/open_file.dart'
+  if (Platform.isOhos) 'package:open_file_ohos/open_file_ohos.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class FileView extends StatefulWidget {

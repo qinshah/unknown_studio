@@ -4,8 +4,10 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
+  irondash_engine_context
   open_file_linux
   screen_retriever_linux
+  super_native_extensions
   window_manager
 )
 

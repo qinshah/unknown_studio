@@ -36,8 +36,8 @@ class MainApp extends StatelessWidget {
       title: 'Studio',
       home: WindowView(),
       theme: ThemeData(
-        colorScheme: ColorSchemes.lightBlue().copyWith(
-          background: Colors.gray[200],
+        colorScheme: ColorSchemes.lightBlue.copyWith(
+          background: () => Colors.gray[200],
         ),
         radius: 0.5,
       ),
