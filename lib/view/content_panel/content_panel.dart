@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:file_icon/file_icon.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart' as m;
@@ -10,6 +9,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 import '../../model/entity_node.dart';
 import '../../model/panel_model.dart';
 import '../../state/tabs_state.dart';
+import '../../state/content_state.dart';
 
 class ContentPanel extends StatefulWidget {
   const ContentPanel({super.key});
@@ -19,85 +19,15 @@ class ContentPanel extends StatefulWidget {
 }
 
 class _ContentPanelState extends State<ContentPanel> {
-  EntityNode? _root;
-  TreeController<EntityNode>? _treeController;
-
-  @override
-  void initState() {
-    super.initState();
-  }
+  final _contentState = ContentState();
 
   Future<void> _openCentent() async {
     if (Platform.isAndroid) {
       final status = await Permission.manageExternalStorage.request();
       if (status.isDenied) return;
     }
-    var dirPath = await getDirectoryPath();
-    if (dirPath == null) return;
-    setState(() {
-      _root = EntityNode(Directory(dirPath));
-    });
-    _treeController?.dispose();
-    _treeController = TreeController<EntityNode>(
-      roots: _root!.children,
-      childrenProvider: (node) => node.children,
-    );
-    _loadChildren(_root!, loadedDepth: 0, depth: 1).then((_) {
-      _treeController?.rebuild();
-    });
-  }
-
-  Future<void> _loadChildren(
-    EntityNode node, {
-    required int loadedDepth,
-    required int depth,
-  }) async {
-    var entity = node.entity;
-    if (loadedDepth >= depth || entity is! Directory) return;
-    print('加载${entity.path}目录');
-
-    final childCount = await entity.list().length;
-    setState(() {
-      node.children.clear();
-      node.childrenLength = childCount;
-    });
-
-    try {
-      List<EntityNode> dirChildren = [];
-      List<EntityNode> fileChildren = [];
-      await for (var entity in entity.list()) {
-        var childNode = EntityNode(entity);
-        // TODO：取消耗时模拟
-        await Future.delayed(const Duration(milliseconds: 2));
-        setState(() {
-          // 先添加到children以更新加载进度
-          node.children.add(childNode);
-        });
-        if (entity is Directory) {
-          dirChildren.add(childNode);
-          // TODO: 需要加载更深时取消注释
-          // if (loadedDepth + 1 < depth) {
-          //   await _loadChildren(
-          //     childNode,
-          //     loadedDepth: loadedDepth + 1,
-          //     depth: depth,
-          //   );
-          // }
-        } else {
-          fileChildren.add(childNode);
-        }
-      }
-      // 按字母排序后又将文件夹排在前面
-      dirChildren.sort((a, b) =>
-          a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
-      fileChildren.sort((a, b) =>
-          a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
-      node.children.clear();
-      node.children.addAll(dirChildren);
-      node.children.addAll(fileChildren);
-    } catch (e) {
-      print(e);
-    }
+    final dirPath = await getDirectoryPath();
+    await _contentState.openContent(dirPath);
   }
 
   @override
@@ -108,106 +38,113 @@ class _ContentPanelState extends State<ContentPanel> {
           padding: const EdgeInsets.all(4),
           child: Row(children: [
             Text(Panel.content.title),
-            Spacer(),
+            const Spacer(),
             IconButton.ghost(
-              icon: Icon(BootstrapIcons.folder2Open),
+              icon: const Icon(BootstrapIcons.folder2Open),
               size: ButtonSize.small,
               onPressed: _openCentent,
             ),
             IconButton.ghost(
-              icon: Icon(LucideIcons.folderX),
+              icon: const Icon(LucideIcons.folderX),
               size: ButtonSize.small,
-              onPressed: () => setState(() => _root = null),
+              onPressed: _contentState.clearContent,
             ),
           ]),
         ),
         Expanded(
-          child: _root == null || _treeController == null
-              ? Center(
+          child: ListenableBuilder(
+            listenable: _contentState,
+            builder: (context, _) {
+              final root = _contentState.root;
+              final treeController = _contentState.treeController;
+
+              if (root == null || treeController == null) {
+                return Center(
                   child: Button.primary(
                     onPressed: _openCentent,
-                    child: Text('打开目录'),
+                    child: const Text('打开目录'),
                   ),
-                )
-              : AnimatedTreeView(
-                  treeController: _treeController!,
-                  nodeBuilder: (context, entry) {
-                    final node = entry.node;
-                    final entity = node.entity;
-                    final entityName = entity.path.split('/').last;
-
-                    return m.Material(
-                      color: Colors.transparent,
-                      child: m.InkWell(
-                        hoverColor: Colors.gray[100],
-                        splashFactory: m.NoSplash.splashFactory,
-                        onTap: () async {
-                          if (entity is Directory) {
-                            if (!entry.isExpanded) {
-                              await _loadChildren(node,
-                                  depth: 1, loadedDepth: 0);
-                              _treeController?.rebuild();
-                            }
-                            _treeController?.toggleExpansion(node);
-                          } else if (entity is File) {
-                            TabsState().add(node);
+                );
+              }
+              return AnimatedTreeView<EntityNode>(
+                treeController: treeController,
+                nodeBuilder: (context, entry) {
+                  final node = entry.node;
+                  final entity = node.entity;
+                  final entityName = entity.path.split('/').last;
+                  return m.Material(
+                    color: m.Colors.transparent,
+                    child: m.InkWell(
+                      hoverColor: Colors.gray.shade200,
+                      splashFactory: m.NoSplash.splashFactory,
+                      onTap: () async {
+                        if (entity is Directory) {
+                          if (!entry.isExpanded) {
+                            await _contentState.loadChildren(
+                              node,
+                              depth: 1,
+                              loadedDepth: 0,
+                            );
                           }
-                        },
-                        child: SizedBox(
-                          height: 25,
-                          child: TreeIndentation(
-                            entry: entry,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              physics: NeverScrollableScrollPhysics(),
-                              child: Row(
-                                children: [
-                                  entity is File
-                                      ? FileIcon(entityName, size: 16)
-                                      : node.children.length <
-                                              node.childrenLength
-                                          ? Container(
-                                              padding: const EdgeInsets.all(2),
-                                              width: 16,
-                                              height: 16,
-                                              child:
-                                                  m.CircularProgressIndicator(
-                                                value: node.children.length /
-                                                    node.childrenLength,
-                                                strokeWidth: 2,
-                                              ),
-                                            )
-                                          : AnimatedRotation(
-                                              turns:
-                                                  entry.isExpanded ? 0.25 : 0.0,
-                                              duration: const Duration(
-                                                  milliseconds: 200),
-                                              curve: Curves.easeInOut,
-                                              child: Icon(
-                                                RadixIcons.caretRight,
-                                                size: 16,
-                                                color: Colors.gray[400],
-                                              ),
-                                            ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    entityName,
-                                    // 隐藏文件减弱视觉效果
-                                    style: TextStyle(
-                                      color: entityName[0] == '.'
-                                          ? Colors.gray
-                                          : null,
+                          _contentState.treeController?.toggleExpansion(node);
+                        } else if (entity is File) {
+                          TabsState().add(node);
+                        }
+                      },
+                      child: SizedBox(
+                        height: 25,
+                        child: TreeIndentation(
+                          entry: entry,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const NeverScrollableScrollPhysics(),
+                            child: Row(
+                              children: [
+                                if (entity is File)
+                                  FileIcon(entityName, size: 16)
+                                else if (node.children.length <
+                                    node.childrenLength)
+                                  Container(
+                                    padding: const EdgeInsets.all(2),
+                                    width: 16,
+                                    height: 16,
+                                    child: m.CircularProgressIndicator(
+                                      value: node.children.length /
+                                          node.childrenLength,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                else
+                                  AnimatedRotation(
+                                    turns: entry.isExpanded ? 0.25 : 0.0,
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeInOut,
+                                    child: Icon(
+                                      RadixIcons.caretRight,
+                                      size: 16,
+                                      color: Colors.gray,
                                     ),
                                   ),
-                                ],
-                              ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  entityName,
+                                  style: TextStyle(
+                                    color: entityName[0] == '.'
+                                        ? Colors.gray
+                                        : null,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );
