@@ -3,7 +3,7 @@ import 'dart:io';
 class EntityNode {
   final FileSystemEntity entity;
   List<EntityNode> children = [];
-  bool childrenLoaded = false;
+  bool isLoading = false;
 
   EntityNode(this.entity);
 

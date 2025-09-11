@@ -55,6 +55,11 @@ class _ContentPanelState extends State<ContentPanel> {
     var entity = node.entity;
     if (loadedDepth >= depth || entity is! Directory) return;
     print('加载${entity.path}目录');
+
+    setState(() {
+      node.isLoading = true;
+    });
+
     try {
       List<EntityNode> dirChildren = [];
       List<EntityNode> fileChildren = [];
@@ -62,11 +67,13 @@ class _ContentPanelState extends State<ContentPanel> {
         var childNode = EntityNode(entity);
         if (entity is Directory) {
           dirChildren.add(childNode);
-          await _loadChildren(
-            childNode,
-            loadedDepth: loadedDepth + 1,
-            depth: depth,
-          );
+          if (loadedDepth + 1 < depth) {
+            await _loadChildren(
+              childNode,
+              loadedDepth: loadedDepth + 1,
+              depth: depth,
+            );
+          }
         } else {
           fileChildren.add(childNode);
         }
@@ -76,13 +83,15 @@ class _ContentPanelState extends State<ContentPanel> {
           a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
       fileChildren.sort((a, b) =>
           a.entity.path.toLowerCase().compareTo(b.entity.path.toLowerCase()));
-      // 不能使用=赋值，要用add，不然渲染不出来
+      node.children.clear();
       node.children.addAll(dirChildren);
       node.children.addAll(fileChildren);
-
-      node.childrenLoaded = true;
     } catch (e) {
       print(e);
+    } finally {
+      setState(() {
+        node.isLoading = false;
+      });
     }
   }
 
@@ -119,22 +128,25 @@ class _ContentPanelState extends State<ContentPanel> {
                   treeController: _treeController!,
                   nodeBuilder: (context, entry) {
                     final node = entry.node;
-                    if (!node.childrenLoaded) {
-                      _loadChildren(node, depth: 1, loadedDepth: 0).then((_) {
-                        node.childrenLoaded = true;
-                        _treeController?.rebuild();
-                      });
-                    }
-                    final entity = entry.node.entity;
+                    final entity = node.entity;
                     final entityName = entity.path.split('/').last;
+
                     return m.Material(
                       color: Colors.transparent,
                       child: m.InkWell(
                         hoverColor: Colors.gray[100],
-                        splashFactory: m.NoSplash.splashFactory, // 禁用涟漪效果
-                        onTap: () {
-                          _treeController?.toggleExpansion(node);
-                          if (node.entity is File) TabsState().add(node);
+                        splashFactory: m.NoSplash.splashFactory,
+                        onTap: () async {
+                          if (entity is Directory && !node.isLoading) {
+                            if (!entry.isExpanded) {
+                              await _loadChildren(node,
+                                  depth: 1, loadedDepth: 0);
+                              _treeController?.rebuild();
+                            }
+                            _treeController?.toggleExpansion(node);
+                          } else if (entity is File) {
+                            TabsState().add(node);
+                          }
                         },
                         child: SizedBox(
                           height: 25,
@@ -147,17 +159,27 @@ class _ContentPanelState extends State<ContentPanel> {
                                 children: [
                                   entity is File
                                       ? FileIcon(entityName, size: 16)
-                                      : AnimatedRotation(
-                                          turns: entry.isExpanded ? 0.25 : 0.0,
-                                          duration:
-                                              const Duration(milliseconds: 200),
-                                          curve: Curves.easeInOut,
-                                          child: Icon(
-                                            RadixIcons.caretRight,
-                                            size: 16,
-                                            color: Colors.gray[400],
-                                          ),
-                                        ),
+                                      : node.isLoading
+                                          ? SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child:
+                                                  m.CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : AnimatedRotation(
+                                              turns:
+                                                  entry.isExpanded ? 0.25 : 0.0,
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              curve: Curves.easeInOut,
+                                              child: Icon(
+                                                RadixIcons.caretRight,
+                                                size: 16,
+                                                color: Colors.gray[400],
+                                              ),
+                                            ),
                                   const SizedBox(width: 2),
                                   Text(
                                     entityName,
