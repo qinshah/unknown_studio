@@ -20,7 +20,6 @@ class ContentState extends ChangeNotifier {
       roots: [root!],
       childrenProvider: (node) => node.children,
     );
-    print('object');
     notifyListeners();
     await _loadChildren(root!, loadedDepth: 0, depth: 1);
     treeController!.expand(root!);

@@ -56,7 +56,6 @@ class _ContentPanelState extends State<ContentPanel> {
             builder: (context, _) {
               final root = _contentState.root;
               final treeController = _contentState.treeController;
-
               if (root == null || treeController == null) {
                 return Center(
                   child: Button.primary(
@@ -65,7 +64,9 @@ class _ContentPanelState extends State<ContentPanel> {
                   ),
                 );
               }
+              // TODO 第一次显示时会很卡顿
               return AnimatedTreeView<EntityNode>(
+                key: PageStorageKey('TreeView'),
                 treeController: treeController,
                 nodeBuilder: (context, entry) {
                   final node = entry.node;
