@@ -26,8 +26,7 @@ class _ContentPanelState extends State<ContentPanel> {
       final status = await Permission.manageExternalStorage.request();
       if (status.isDenied) return;
     }
-    final dirPath = await getDirectoryPath();
-    await _contentState.openContent(dirPath);
+    _contentState.loadContent(await getDirectoryPath());
   }
 
   @override
@@ -71,7 +70,9 @@ class _ContentPanelState extends State<ContentPanel> {
                 nodeBuilder: (context, entry) {
                   final node = entry.node;
                   final entity = node.entity;
-                  final entityName = entity.path.split('/').last;
+                  final pathEnd =
+                      entity.path.split(Platform.pathSeparator).last;
+                  final entityName = pathEnd.isEmpty ? entity.path : pathEnd;
                   return m.Material(
                     color: m.Colors.transparent,
                     child: m.InkWell(
@@ -79,7 +80,7 @@ class _ContentPanelState extends State<ContentPanel> {
                       splashFactory: m.NoSplash.splashFactory,
                       onTap: () async {
                         if (entity is Directory) {
-                          if (!entry.isExpanded) {
+                          if (!entry.isExpanded && node.children.isEmpty) {
                             await _contentState.loadChildren(
                               node,
                               depth: 1,

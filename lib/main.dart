@@ -27,6 +27,9 @@ void main() async {
 }
 
 class MainApp extends StatelessWidget {
+  /// 是否启用耗时模拟
+  static bool enableSlowSimulation = true;
+
   const MainApp({super.key});
 
   @override

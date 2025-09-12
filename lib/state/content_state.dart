@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
+import '../main.dart';
 import '../model/entity_node.dart';
 
 class ContentState extends ChangeNotifier {
@@ -11,18 +12,18 @@ class ContentState extends ChangeNotifier {
   EntityNode? root;
   TreeController<EntityNode>? treeController;
 
-  Future<void> openContent(String? dirPath) async {
+  Future<void> loadContent(String? dirPath) async {
     if (dirPath == null) return;
-
     root = EntityNode(Directory(dirPath));
     treeController?.dispose();
     treeController = TreeController<EntityNode>(
-      roots: root!.children,
+      roots: [root!],
       childrenProvider: (node) => node.children,
     );
-    await _loadChildren(root!, loadedDepth: 0, depth: 1);
-    treeController?.rebuild();
+    print('object');
     notifyListeners();
+    await _loadChildren(root!, loadedDepth: 0, depth: 1);
+    treeController!.expand(root!);
   }
 
   void clearContent() {
@@ -60,8 +61,10 @@ class ContentState extends ChangeNotifier {
       List<EntityNode> fileChildren = [];
       await for (var entity in entity.list()) {
         var childNode = EntityNode(entity);
-        // TODO：移除耗时模拟
-        await Future.delayed(const Duration(milliseconds: 2));
+        if (kDebugMode && MainApp.enableSlowSimulation) {
+          // 调试模式耗时模拟
+          await Future.delayed(const Duration(milliseconds: 5));
+        }
         node.children.add(childNode);
         notifyListeners();
 
