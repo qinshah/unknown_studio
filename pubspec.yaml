@@ -14,21 +14,28 @@ dependencies:
     git:
       url: https://github.com/qinshah/shadcn_flutter.git
   window_manager: ^0.5.1
-  two_dimensional_scrollables: ^0.3.7
-  flutter_fancy_tree_view2: ^1.6.2
+  flutter_fancy_tree_view2: ^1.6.2 # 树形结构
   # 两个版本都依赖，使用条件导入
-  open_file: ^3.5.10 # 原生打开文件
-  open_file_ohos: # 鸿蒙原生打开文件
-  file_selector: # 文件选择器
+  open_file: ^3.5.10 # 系统打开文件
+  open_file_ohos: ^1.0.0 # 系统打开文件_鸿蒙
+  webview_flutter: ^4.13.0 # web环境
+  # webview_flutter: # web环境_鸿蒙
+  #   git:
+  #     url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+  #     path: "packages/webview_flutter/webview_flutter"
+  pigeon:
+    git:
+      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
+      path: "packages/pigeon"
+  file_selector: # 文件选择器_鸿蒙
     git:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       path: "packages/file_selector/file_selector"
-  permission_handler: ^12.0.1
+  permission_handler: ^12.0.1 #TODO 鸿蒙
   file_icon:
     git:
       url: "https://github.com/qinshah/file-icon.git"
       path: "file_icon"
-  provider: ^6.1.2
 dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_test:
