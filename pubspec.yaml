@@ -9,13 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # shadcn_flutter: ^0.0.39
-  shadcn_flutter:
+  # shadcn_flutter:
+  shadcn_flutter: # shadcnUI库_防止鸿蒙flutter报错
     git:
       url: https://github.com/qinshah/shadcn_flutter.git
-  window_manager: ^0.5.1
+  window_manager: ^0.5.1 # 窗口管理
   flutter_fancy_tree_view2: ^1.6.2 # 树形结构
-  # 两个版本都依赖，使用条件导入
   open_file: ^3.5.10 # 系统打开文件
   open_file_ohos: ^1.0.0 # 系统打开文件_鸿蒙
   webview_flutter: ^4.13.0 # web环境
@@ -32,10 +31,14 @@ dependencies:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       path: "packages/file_selector/file_selector"
   permission_handler: ^12.0.1 #TODO 鸿蒙
-  file_icon:
+  file_icon: # 文件图标_新图标支持
     git:
       url: "https://github.com/qinshah/file-icon.git"
       path: "file_icon"
+  mc_launch: # 启动mc
+    git:
+      url: "https://github.com/qinshah/mc_launch.git"
+    # path: "Package/mc_launch"
 dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_test:

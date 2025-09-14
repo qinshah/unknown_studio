@@ -6,8 +6,8 @@ import '../model/entity_node.dart';
 
 class ContentState extends ChangeNotifier {
   ContentState._();
-  static final ContentState _instance = ContentState._();
-  factory ContentState() => _instance;
+  static final ContentState i = ContentState._();
+  factory ContentState() => i;
 
   EntityNode? root;
   TreeController<EntityNode>? treeController;

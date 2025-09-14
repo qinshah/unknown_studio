@@ -419,6 +419,15 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.11.1"
+  mc_launch:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: da310b9aaf4ced7c7c1b02674d4da5f6b2308f51
+      url: "https://github.com/qinshah/mc_launch.git"
+    source: git
+    version: "0.1.0+2"
   meta:
     dependency: transitive
     description:
@@ -899,5 +908,5 @@ packages:
     source: hosted
     version: "3.1.3"
 sdks:
-  dart: ">=3.8.0 <4.0.0"
+  dart: ">=3.8.1 <4.0.0"
   flutter: ">=3.32.3"
