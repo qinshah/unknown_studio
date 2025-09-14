@@ -106,12 +106,14 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
           int memory;
           try {
             memory = int.parse(_memoryCntlr.text);
+            if (memory < 1024) {
+              throw FormatException('内存不能小于1024MB');
+            }
             MinecraftLauncher.launch(
               versionPath: values[_versionKey]!,
               username: values[_usernameKey]!,
               memory: memory,
             );
-
             showDialog(
               context: context,
               builder: (context) {
@@ -122,7 +124,7 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
             showDialog(
               context: context,
               builder: (context) {
-                return AlertDialog(title: const Text('请输入正确的内存'));
+                return AlertDialog(title: const Text('内存请输入1024以上的整数'));
               },
             );
           }
