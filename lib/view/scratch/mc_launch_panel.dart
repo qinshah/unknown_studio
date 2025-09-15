@@ -27,22 +27,12 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      headers: [Text('启动我的世界', textAlign: TextAlign.center)],
+      headers: [Text('我的世界启动', textAlign: TextAlign.center)],
       child: Form(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: _gamePaths.isEmpty
-              ? [
-                  Text('未检测到我的世界路径'),
-                  Text('请打开.minecraft文件夹'),
-                  SizedBox(height: 16),
-                  PrimaryButton(
-                    child: Text('刷新'),
-                    onPressed: () => setState(() {
-                      _gamePaths = _getGamePaths();
-                    }),
-                  ),
-                ]
+              ? [Text('未找到versions文件夹'), Text('请打开含versions的目录')]
               : [
                   FormField(
                     key: _versionKey,
