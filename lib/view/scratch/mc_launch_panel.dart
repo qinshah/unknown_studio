@@ -182,7 +182,7 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                         final logs = snapshot.data ?? [];
                         if (logs.isEmpty) {
                           return const Center(
-                            child: Text('暂无日志'),
+                            child: Text('日志功能待开发'),
                           );
                         }
                         return ListView.builder(
@@ -217,31 +217,26 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                 ],
               ),
               onSubmit: (context, values) async {
-                int memory;
                 try {
-                  memory = int.parse(_memoryCntlr.text);
-                  if (memory < 1024) {
-                    throw FormatException('内存不能小于1024MB');
-                  }
-                  print('正在启动Minecraft...');
-                  print('版本路径: ${values[_versionKey]}');
-                  print('用户名: ${values[_usernameKey]}');
-                  print('内存: $memory MB');
-
+                  int memory = int.parse(_memoryCntlr.text);
+                  if (memory < 1024) throw Exception();
                   MinecraftLauncher.launch(
                     versionPath: values[_versionKey]!,
                     username: values[_usernameKey]!,
                     memory: memory,
                   );
-                  print('Minecraft启动命令已发送');
                   showDialog(
                     context: context,
                     builder: (context) {
-                      return AlertDialog(title: const Text('已尝试启动'));
+                      return AlertDialog(
+                        title: Column(children: [
+                          const Text('已尝试启动，请勿重复启动'),
+                          const Text('待日志功能开发后会进行完善'),
+                        ]),
+                      );
                     },
                   );
                 } catch (e) {
-                  print('启动错误: $e');
                   showDialog(
                     context: context,
                     builder: (context) {
