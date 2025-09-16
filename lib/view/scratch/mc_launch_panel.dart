@@ -45,7 +45,8 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                     label: const Text('游戏版本'),
                     validator: const NotEmptyValidator(message: '请选择'),
                     child: Select<String>(
-                      itemBuilder: (_, path) => Text(path.split('/').last),
+                      itemBuilder: (_, path) =>
+                          Text(path.split(Platform.pathSeparator).last),
                       onChanged: (value) {
                         setState(() {
                           _selectedPath = value;
@@ -59,7 +60,8 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                             (String value) {
                               return SelectItemButton<String>(
                                 value: value,
-                                child: Text(value.split('/').last),
+                                child: Text(
+                                    value.split(Platform.pathSeparator).last),
                               );
                             },
                           ).toList(),
@@ -116,19 +118,22 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                 ],
               ),
               onSubmit: (context, values) async {
+                int memory = 1024;
+                // 检查内存输入是否合法
                 try {
-                  int memory = int.parse(_memoryCntlr.text);
+                  memory = int.parse(_memoryCntlr.text);
                   if (memory < 1024) throw Exception();
+                } catch (e) {
                   showDialog(
                     context: context,
                     builder: (context) {
-                      return AlertDialog(
-                        title: Column(children: [
-                          const Text('已尝试启动，请勿重复启动'),
-                        ]),
-                      );
+                      return AlertDialog(title: const Text('内存请输入1024以上的整数'));
                     },
                   );
+                  return;
+                }
+                // 尝试启动
+                try {
                   process = await MinecraftLauncher.launch(
                     versionPath: values[_versionKey]!,
                     username: values[_usernameKey]!,
@@ -150,12 +155,18 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                     });
                     _logsCntlr.jumpTo(_logsCntlr.position.maxScrollExtent);
                   });
-                } catch (e) {
                   if (!context.mounted) return;
                   showDialog(
                     context: context,
                     builder: (context) {
-                      return AlertDialog(title: const Text('内存请输入1024以上的整数'));
+                      return AlertDialog(title: const Text('已尝试启动，请勿重复启动'));
+                    },
+                  );
+                } on Exception catch (e) {
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(title: Text('启动失败:$e'));
                     },
                   );
                 }
