@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:mc_launch/mc_launch.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
@@ -11,64 +12,6 @@ class McLaunchPanel extends StatefulWidget {
   State<McLaunchPanel> createState() => _McLaunchPanelState();
 }
 
-// 日志管理器
-class LogManager {
-  static final LogManager _instance = LogManager._internal();
-  factory LogManager() => _instance;
-  LogManager._internal();
-
-  static final List<String> _logs = [];
-  static final StreamController<List<String>> _logController =
-      StreamController<List<String>>.broadcast();
-
-  static void init() {
-    // 重定向print输出
-    runZonedGuarded(
-      () {
-        // 保存原始的print函数
-        final originalPrint = debugPrint;
-
-        // 重写debugPrint
-        debugPrint = (String? message, {int? wrapWidth}) {
-          if (message != null) {
-            // 添加时间戳
-            final timestamp = DateTime.now().toString();
-            final logMessage = '[$timestamp] $message';
-
-            // 添加到日志列表
-            _logs.add(logMessage);
-
-            // 通知监听器
-            _logController.add(List.from(_logs));
-
-            // 调用原始print函数，保持控制台输出
-            originalPrint(message, wrapWidth: wrapWidth);
-          }
-        };
-      },
-      (error, stack) {
-        // 捕获未处理的错误
-        final timestamp = DateTime.now().toString();
-        final errorMessage = '[$timestamp] ERROR: $error\nSTACK: $stack';
-        _logs.add(errorMessage);
-        _logController.add(List.from(_logs));
-      },
-    );
-  }
-
-  // 获取日志流
-  static Stream<List<String>> get logStream => _logController.stream;
-
-  // 清除日志
-  static void clearLogs() {
-    _logs.clear();
-    _logController.add(List.from(_logs));
-  }
-
-  // 获取当前所有日志
-  static List<String> get currentLogs => List.from(_logs);
-}
-
 class _McLaunchPanelState extends State<McLaunchPanel> {
   late final List<String> _gamePaths = _getGamePaths();
   String? _selectedPath;
@@ -76,28 +19,14 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
   final _versionKey = const TextFieldKey('version');
   final _usernameKey = const TextFieldKey('username');
   final _memoryKey = const FormKey<int>('memory');
-  final ScrollController _scrollController = ScrollController();
+  late Process process;
+  final List<String> _logs = [];
+  final _logsCntlr = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    // 初始化日志管理器
-    LogManager.init();
-
-    // 监听日志流
-    LogManager.logStream.listen((logs) {
-      print(logs);
-      // 自动滚动到底部
-      if (_scrollController.hasClients) {
-        Future.delayed(const Duration(milliseconds: 100), () {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        });
-      }
-    });
+  void dispose() {
+    _logsCntlr.dispose();
+    super.dispose();
   }
 
   @override
@@ -169,48 +98,18 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                   ),
                   SizedBox(height: 24),
                   // 日志显示区域
+                  Text('日志'),
                   Container(
                     height: 200,
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.gray),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: StreamBuilder<List<String>>(
-                      stream: LogManager.logStream,
-                      initialData: LogManager.currentLogs,
-                      builder: (context, snapshot) {
-                        final logs = snapshot.data ?? [];
-                        if (logs.isEmpty) {
-                          return const Center(
-                            child: Text('日志功能待开发'),
-                          );
-                        }
-                        return ListView.builder(
-                          controller: _scrollController,
-                          itemCount: logs.length,
-                          itemBuilder: (context, index) {
-                            final log = logs[index];
-                            // 根据日志内容判断是否为错误日志
-                            final isError = log.contains('ERROR:') ||
-                                log.contains('STACK:');
-
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              color: isError ? Colors.red.shade50 : null,
-                              child: Text(
-                                log,
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 12,
-                                  color: isError
-                                      ? Colors.red.shade800
-                                      : Colors.black,
-                                ),
-                              ),
-                            );
-                          },
-                        );
+                    child: ListView.builder(
+                      controller: _logsCntlr,
+                      itemCount: _logs.length,
+                      itemBuilder: (context, index) {
+                        return Text(_logs[index]);
                       },
                     ),
                   ),
@@ -220,23 +119,39 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                 try {
                   int memory = int.parse(_memoryCntlr.text);
                   if (memory < 1024) throw Exception();
-                  MinecraftLauncher.launch(
-                    versionPath: values[_versionKey]!,
-                    username: values[_usernameKey]!,
-                    memory: memory,
-                  );
                   showDialog(
                     context: context,
                     builder: (context) {
                       return AlertDialog(
                         title: Column(children: [
                           const Text('已尝试启动，请勿重复启动'),
-                          const Text('待日志功能开发后会进行完善'),
                         ]),
                       );
                     },
                   );
+                  process = await MinecraftLauncher.launch(
+                    versionPath: values[_versionKey]!,
+                    username: values[_usernameKey]!,
+                    memory: memory,
+                  );
+                  // 监听输出
+                  _logs.clear();
+                  process.stdout.listen((data) {
+                    final output = String.fromCharCodes(data).trim();
+                    setState(() {
+                      _logs.add(output);
+                    });
+                    _logsCntlr.jumpTo(_logsCntlr.position.maxScrollExtent);
+                  });
+                  process.stderr.listen((data) {
+                    final output = String.fromCharCodes(data).trim();
+                    setState(() {
+                      _logs.add(output);
+                    });
+                    _logsCntlr.jumpTo(_logsCntlr.position.maxScrollExtent);
+                  });
                 } catch (e) {
+                  if (!context.mounted) return;
                   showDialog(
                     context: context,
                     builder: (context) {
@@ -247,12 +162,6 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
               },
             ),
     );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   List<String> _getGamePaths() {
