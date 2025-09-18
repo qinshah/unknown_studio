@@ -26,7 +26,28 @@ class _ContentPanelState extends State<ContentPanel> {
       final status = await Permission.manageExternalStorage.request();
       if (status.isDenied) return;
     }
-    _contentState.loadContent(await getDirectoryPath());
+    try {
+      _contentState.loadContent(await getDirectoryPath());
+    } on Exception catch (e) {
+      print('打开目录失败：$e');
+    }
+  }
+
+  Future<void> _openRootCentent() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.manageExternalStorage.request();
+      if (status.isDenied) return;
+    }
+    try {
+      final rootPath = switch (Platform.operatingSystem) {
+        'android' => '/storage/emulated/0',
+        'ohos' => 'storage/Users/currentUser',
+        String() => Platform.pathSeparator,
+      };
+      _contentState.loadContent(Directory(rootPath).path);
+    } on Exception catch (e) {
+      print('打开根目录失败：$e');
+    }
   }
 
   @override
@@ -57,11 +78,19 @@ class _ContentPanelState extends State<ContentPanel> {
               final root = _contentState.root;
               final treeController = _contentState.treeController;
               if (root == null || treeController == null) {
-                return Center(
-                  child: Button.primary(
-                    onPressed: _openCentent,
-                    child: const Text('打开目录'),
-                  ),
+                return m.Column(
+                  mainAxisAlignment: m.MainAxisAlignment.center,
+                  children: [
+                    Button.primary(
+                      onPressed: _openCentent,
+                      child: const Text('打开目录(暂不支持鸿蒙)'),
+                    ),
+                    SizedBox(height: 10),
+                    Button.primary(
+                      onPressed: _openRootCentent,
+                      child: const Text('打开根目录'),
+                    ),
+                  ],
                 );
               }
               // TODO 第一次显示时会很卡顿
