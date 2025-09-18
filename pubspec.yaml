@@ -22,14 +22,11 @@ dependencies:
   #   git:
   #     url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
   #     path: "packages/webview_flutter/webview_flutter"
-  pigeon:
-    git:
-      url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
-      path: "packages/pigeon"
   file_selector: # 文件选择器_鸿蒙
     git:
       url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
       path: "packages/file_selector/file_selector"
+      branch: "br_file_selector-v1.0.3_ohos"
   permission_handler: ^12.0.1 #TODO 鸿蒙
   file_icon: # 文件图标_新图标支持
     git:

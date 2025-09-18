@@ -178,6 +178,6 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
   List<String> _getGamePaths() {
     final dirPath = ContentState.i.root?.entity.path;
     if (dirPath == null) return [];
-    return MinecraftLauncher.detectVersions(dirPath, includeModded: true);
+    return MCLauncher.detectVersions(dirPath, includeModded: true);
   }
 }
