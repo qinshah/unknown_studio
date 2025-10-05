@@ -53,6 +53,7 @@ class ContentState extends ChangeNotifier {
     final childCount = await entity.list().length;
     node.children.clear();
     node.childrenLength = childCount;
+    print('加载${entity.path}下的$childCount个子节点');
     notifyListeners();
 
     try {

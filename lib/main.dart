@@ -12,10 +12,10 @@ void main() async {
   try {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = WindowOptions(
-      titleBarStyle: TitleBarStyle.hidden,
+      titleBarStyle: TitleBarStyle.normal,
       windowButtonVisibility: true,
+      
     );
-    windowManager.setMovable(false);
     windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();

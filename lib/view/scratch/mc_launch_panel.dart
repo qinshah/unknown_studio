@@ -134,7 +134,7 @@ class _McLaunchPanelState extends State<McLaunchPanel> {
                 }
                 // 尝试启动
                 try {
-                  process = await MinecraftLauncher.launch(
+                  process = await MCLauncher.launch(
                     versionPath: values[_versionKey]!,
                     username: values[_usernameKey]!,
                     memory: memory,
