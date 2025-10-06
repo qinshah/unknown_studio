@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_selector/file_selector.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 import '../../state/tabs_state.dart';
@@ -36,7 +39,17 @@ class _TabsViewState extends State<TabsView> {
               });
             },
             child: fileTabs.isEmpty
-                ? Center(child: Text('从目录选择文件'))
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('从目录选择文件或'),
+                      SizedBox(height: 6),
+                      Button.primary(
+                        onPressed: _openFile,
+                        child: Text('打开单个文件'),
+                      ),
+                    ],
+                  )
                 : FileView(
                     fileTabs[focusedIndex].data,
                     key: Key(fileTabs[focusedIndex].data.path),
@@ -74,5 +87,14 @@ class _TabsViewState extends State<TabsView> {
         ),
       ),
     );
+  }
+
+  Future<void> _openFile() async {
+    final xFile = await openFile();
+    if (xFile != null) {
+      setState(() {
+        TabsState().add(File(xFile.path));
+      });
+    }
   }
 }

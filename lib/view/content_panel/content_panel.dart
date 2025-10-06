@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:file_icon/file_icon.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:file_icon/file_icon.dart';
 import 'package:flutter/material.dart' as m;
 import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
 import 'package:permission_handler/permission_handler.dart';

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/cpp.dart';
 import 'package:re_highlight/languages/dart.dart';
