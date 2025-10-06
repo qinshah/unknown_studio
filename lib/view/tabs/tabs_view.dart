@@ -1,9 +1,5 @@
-import 'dart:io';
-
-import 'package:flutter/material.dart' as m;
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
-import '../../model/entity_node.dart';
 import '../../state/tabs_state.dart';
 import '../file/file_view.dart';
 
@@ -23,10 +19,12 @@ class _TabsViewState extends State<TabsView> {
       child: ListenableBuilder(
         listenable: TabsState(),
         builder: (BuildContext context, _) {
-          return TabPane<EntityNode>(
+          final focusedIndex = TabsState().focusedIndex;
+          final fileTabs = TabsState().tabs;
+          return TabPane(
             items: TabsState().tabs,
             itemBuilder: (context, item, index) => _tabView(index),
-            focused: TabsState().focused,
+            focused: TabsState().focusedIndex,
             onFocused: (value) {
               setState(() {
                 TabsState().index = value;
@@ -37,10 +35,11 @@ class _TabsViewState extends State<TabsView> {
                 TabsState().tabs = value;
               });
             },
-            child: TabsState().tabs.isEmpty
+            child: fileTabs.isEmpty
                 ? Center(child: Text('从目录选择文件'))
                 : FileView(
-                    TabsState().tabs[TabsState().focused].data.entity as File,
+                    fileTabs[focusedIndex].data,
+                    key: Key(fileTabs[focusedIndex].data.path),
                   ),
           );
         },
@@ -49,7 +48,7 @@ class _TabsViewState extends State<TabsView> {
   }
 
   TabItem _tabView(int index) {
-    final entityNode = TabsState().tabs[index].data;
+    final file = TabsState().tabs[index].data;
     return TabItem(
       // TODO 添加Tab hover效果
       child: GestureDetector(
@@ -60,7 +59,7 @@ class _TabsViewState extends State<TabsView> {
         },
         child: Row(
           children: [
-            Text(entityNode.entity.path.split('/').last),
+            Text(file.path.split('/').last),
             IconButton.ghost(
               shape: ButtonShape.circle,
               size: ButtonSize.small,

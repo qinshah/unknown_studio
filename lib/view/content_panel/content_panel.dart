@@ -5,6 +5,8 @@ import 'package:flutter/material.dart' as m;
 import 'package:flutter_fancy_tree_view2/flutter_fancy_tree_view2.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:open_file/open_file.dart'
+    if (Platform.isOhos) 'package:open_file_ohos/open_file_ohos.dart';
 
 import '../../model/entity_node.dart';
 import '../../model/panel_model.dart';
@@ -20,6 +22,7 @@ class ContentPanel extends StatefulWidget {
 
 class _ContentPanelState extends State<ContentPanel> {
   final _contentState = ContentState();
+  TapDownDetails _tapDownDetails = TapDownDetails();
 
   Future<void> _openCentent() async {
     if (Platform.isAndroid) {
@@ -30,23 +33,6 @@ class _ContentPanelState extends State<ContentPanel> {
       _contentState.loadContent(await getDirectoryPath());
     } on Exception catch (e) {
       print('打开目录失败：$e');
-    }
-  }
-
-  Future<void> _openRootCentent() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.manageExternalStorage.request();
-      if (status.isDenied) return;
-    }
-    try {
-      final rootPath = switch (Platform.operatingSystem) {
-        'android' => '/storage/emulated/0',
-        'ohos' => 'storage/Users/currentUser',
-        String() => Platform.pathSeparator,
-      };
-      _contentState.loadContent(Directory(rootPath).path);
-    } on Exception catch (e) {
-      print('打开根目录失败：$e');
     }
   }
 
@@ -78,19 +64,11 @@ class _ContentPanelState extends State<ContentPanel> {
               final root = _contentState.root;
               final treeController = _contentState.treeController;
               if (root == null || treeController == null) {
-                return m.Column(
-                  mainAxisAlignment: m.MainAxisAlignment.center,
-                  children: [
-                    Button.primary(
-                      onPressed: _openCentent,
-                      child: const Text('打开目录(暂不支持鸿蒙)'),
-                    ),
-                    SizedBox(height: 10),
-                    Button.primary(
-                      onPressed: _openRootCentent,
-                      child: const Text('打开根目录'),
-                    ),
-                  ],
+                return m.Center(
+                  child: Button.primary(
+                    onPressed: _openCentent,
+                    child: const Text('打开目录'),
+                  ),
                 );
               }
               // TODO 第一次显示时会很卡顿
@@ -119,9 +97,14 @@ class _ContentPanelState extends State<ContentPanel> {
                           }
                           _contentState.treeController?.toggleExpansion(node);
                         } else if (entity is File) {
-                          TabsState().add(node);
+                          TabsState().add(entity);
                         }
                       },
+                      onTapDown: (details) => _tapDownDetails = details,
+                      onSecondaryTapDown: (details) =>
+                          _tapDownDetails = details,
+                      onSecondaryTap: () => _showContextMenu(entity),
+                      onLongPress: () => _showContextMenu(entity),
                       child: SizedBox(
                         height: 25,
                         child: TreeIndentation(
@@ -176,6 +159,22 @@ class _ContentPanelState extends State<ContentPanel> {
               );
             },
           ),
+        ),
+      ],
+    );
+  }
+
+  void _showContextMenu(FileSystemEntity entity) {
+    m.showMenu(
+      context: context,
+      position: m.RelativeRect.fromRect(
+        _tapDownDetails.globalPosition & const Size(40, 40),
+        Offset.zero & MediaQuery.of(context).size,
+      ),
+      items: [
+        m.PopupMenuItem(
+          onTap: () => OpenFile.open(entity.path),
+          child: const Text('默认应用打开'),
         ),
       ],
     );
