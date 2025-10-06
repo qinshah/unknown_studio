@@ -66,8 +66,8 @@ class _ContentPanelState extends State<ContentPanel> {
               if (root == null || treeController == null) {
                 return m.Center(
                   child: Button.primary(
-                    onPressed: _openCentent,
-                    child: const Text('打开目录'),
+                    onPressed: null,
+                    child: const Text('打开目录(暂不支持鸿蒙)'),
                   ),
                 );
               }
