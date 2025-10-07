@@ -27,7 +27,7 @@ class _TabsViewState extends State<TabsView> {
           return TabPane(
             items: TabsState().tabs,
             itemBuilder: (context, item, index) => _tabView(index),
-            focused: TabsState().focusedIndex,
+            focused: focusedIndex,
             onFocused: (value) {
               setState(() {
                 TabsState().index = value;
@@ -50,9 +50,10 @@ class _TabsViewState extends State<TabsView> {
                       ),
                     ],
                   )
-                : FileView(
-                    fileTabs[focusedIndex].data,
-                    key: Key(fileTabs[focusedIndex].data.path),
+                : IndexedStack(
+                    index: focusedIndex,
+                    children:
+                        fileTabs.map((file) => FileView(file.data)).toList(),
                   ),
           );
         },
