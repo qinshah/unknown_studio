@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:re_editor/re_editor.dart';
 import 'package:re_highlight/languages/cpp.dart';
 import 'package:re_highlight/languages/dart.dart';
@@ -10,10 +12,9 @@ import 'package:re_highlight/languages/kotlin.dart';
 import 'package:re_highlight/languages/xml.dart';
 import 'package:re_highlight/languages/yaml.dart';
 import 'package:re_highlight/styles/atom-one-light.dart';
-import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class FileView extends StatefulWidget {
-  const FileView(this.file, {required super.key});
+  const FileView(this.file, {super.key});
 
   final File file;
 
@@ -53,7 +54,7 @@ class _FileViewState extends State<FileView> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error, size: 50, color: Colors.red),
+          Icon(Icons.error, size: 50, color: Colors.red),
           Text('读取文本失败', style: TextStyle(color: Colors.red)),
           Text(_errorMessage!),
         ],
@@ -63,7 +64,21 @@ class _FileViewState extends State<FileView> {
       controller: _controller,
       readOnly: true,
       wordWrap: false,
+      toolbarController: _ToolbarController(),
       chunkAnalyzer: const DefaultCodeChunkAnalyzer(),
+      indicatorBuilder:
+          (context, editingController, chunkController, notifier) {
+        return Row(
+          children: [
+            DefaultCodeLineNumber(
+              controller: editingController,
+              notifier: notifier,
+            ),
+            DefaultCodeChunkIndicator(
+                width: 20, controller: chunkController, notifier: notifier)
+          ],
+        );
+      },
       style: CodeEditorStyle(
         // TODO 添加更多语言
         codeTheme: CodeHighlightTheme(languages: {
@@ -78,19 +93,37 @@ class _FileViewState extends State<FileView> {
           'yaml': CodeHighlightThemeMode(mode: langYaml),
         }, theme: atomOneLightTheme),
       ),
-      indicatorBuilder:
-          (context, editingController, chunkController, notifier) {
-        return Row(
-          children: [
-            DefaultCodeLineNumber(
-              controller: editingController,
-              notifier: notifier,
-            ),
-            DefaultCodeChunkIndicator(
-                width: 20, controller: chunkController, notifier: notifier)
-          ],
-        );
-      },
     );
   }
+}
+
+class _ToolbarController implements SelectionToolbarController {
+  @override
+  void show(
+      {required BuildContext context,
+      required CodeLineEditingController controller,
+      required TextSelectionToolbarAnchors anchors,
+      Rect? renderRect,
+      required LayerLink layerLink,
+      required ValueNotifier<bool> visibility}) {
+    final selectedText = controller.selectedText;
+    showMenu(
+      context: context,
+      // TODO 搞懂RelativeRect
+      position: RelativeRect.fromSize(
+        anchors.primaryAnchor & Size.zero,
+        MediaQuery.of(context).size,
+      ),
+      items: [
+        PopupMenuItem(
+          enabled: selectedText.isNotEmpty,
+          onTap: () => Clipboard.setData(ClipboardData(text: selectedText)),
+          child: Text('复制'),
+        )
+      ],
+    );
+  }
+
+  @override
+  void hide(BuildContext context) {}
 }
