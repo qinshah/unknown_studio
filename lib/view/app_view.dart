@@ -170,10 +170,16 @@ class _AppViewState extends State<AppView> {
     );
   }
 
+  final _windowManagerChannel = MethodChannel('windowManagerChannel');
+
   Widget _appBar() {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onPanStart: (_) => windowManager.startDragging(),
+      onPanStart: (_) {
+        // windowManager.startDragging();
+        // TODO 用插件实现
+        _windowManagerChannel.invokeMethod('startDragging');
+      },
       onPanEnd: (_) {
         windowManager.isMaximized().then((value) {
           setState(() {
@@ -265,7 +271,7 @@ class _AppViewState extends State<AppView> {
               // 关闭窗口
               _tabBarButton(
                 color: Colors.red,
-                onPressed: windowManager.close,
+                onPressed: () => exit(0),
                 iconData: Icons.close,
               ),
             ]
@@ -283,12 +289,15 @@ class _AppViewState extends State<AppView> {
       _isFullScreen ? SystemUiMode.immersiveSticky : SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
     );
-    // TODO 鸿蒙不支持窗口管理
-    try {
-      _isFullScreen ? windowManager.maximize() : windowManager.unmaximize();
-    } catch (e) {
-      print(e);
-    }
+    // try {
+    //   _isFullScreen ? windowManager.maximize() : windowManager.unmaximize();
+    // } catch (e) {
+    //   print(e);
+    // }
+    //
+    //  鸿蒙不支持窗口管理
+    _windowManagerChannel
+        .invokeMethod(_isFullScreen ? 'maximize' : 'unmaximize');
   }
 
   Widget _tabBarButton({
